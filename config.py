@@ -4,7 +4,7 @@ import os
 
 load_dotenv()
 
-APP_PORT = os.environ.get("APP_PORT")
+APP_PORT = int(os.environ.get("APP_PORT"))
 DB_USER = os.environ.get("DB_USER")
 DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_HOST =os.environ.get( "DB_HOST")
