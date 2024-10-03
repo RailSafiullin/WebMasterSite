@@ -315,7 +315,9 @@
             <label for="addConfig${configCounter}">Config:</label>
             <select class="form-control item" id="addConfig${configCounter}" name="configs[]" required>
                 {% for config in all_configs %}
-                <option value="{{ config.id }}">{{ config.name }}</option>
+                    {% if config.user.id == user.id or user.role_info.access_command_panel_full %}
+                        <option value="{{ config.id }}">{{ config.name }}</option>
+                    {% endif %}
                 {% endfor %}
             </select>
             <button type="button" class="btn btn-danger remove-btn" onclick="removeConfigField(this)">Remove</button>
