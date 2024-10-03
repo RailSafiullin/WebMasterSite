@@ -400,9 +400,6 @@
                     <button class="delete-btn" onclick="deleteConfig('{{ url_for('delete_config', config_id=config.id) }}')">Delete</button>
                     </div>
                 </div>
-            
-            {% else %}
-                <h1> {{config.user}}, {{user.id}} </h1>
             {% endif %}
         {% endfor %}
     </div>
