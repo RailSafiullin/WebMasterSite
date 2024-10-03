@@ -4,6 +4,7 @@ from api.config.utils import load_live_search
 from api.auth.auth_config import RoleChecker, PermissionRoleChecker
 from api.auth.models import User
 from api.config.models import ListLrSearchSystem, LiveSearchList, YandexLr
+from api.config.utils import load_live_search
 from db.session import get_db_general
 from services.load_all_queries import get_all_data as get_all_data_queries
 
@@ -82,21 +83,10 @@ async def load_live_search_list(
 ):
     list_lr_id = int(data["list_lr_id"])
     print(list_lr_id)
-    list_lr = (await session.execute(select(ListLrSearchSystem).where(ListLrSearchSystem.id == list_lr_id))).scalars().first()
-
-    list_id, lr, search_system = list_lr.list_id, list_lr.lr, list_lr.search_system
-
-    main_domain = (await session.execute(select(LiveSearchList.main_domain).where(LiveSearchList.id == list_id))).scalars().first()
-
-    status = await live_search_main(list_lr_id, list_id, main_domain, lr, search_system, user, session)
-
+    status = await load_live_search(user, list_lr_id, session)
     if status == 0:
         raise HTTPException(status_code=400, detail="Запросов доступно меньше, чем необходимо")
 
     return {
         "status": 200,
     }
-
-
-
-

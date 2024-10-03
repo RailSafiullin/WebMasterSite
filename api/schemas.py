@@ -1,15 +1,23 @@
 from uuid import UUID
 from enum import Enum
 from typing import Optional
+
 from pydantic import BaseModel, model_validator
+
 from api.config.models import AutoUpdatesMode
+
+
 class AutoUpdatesScheduleBase(BaseModel):
     mode: AutoUpdatesMode
     days: Optional[list[int]] = None
     hours: Optional[int] = None
     minutes: Optional[int] = None
+
+
 class AutoUpdatesScheduleRead(AutoUpdatesScheduleBase):
     id: UUID
+
+
 class AutoUpdatesScheduleCreate(AutoUpdatesScheduleBase):
     @staticmethod
     def _are_days_in_range(days, max_range):
@@ -19,6 +27,7 @@ class AutoUpdatesScheduleCreate(AutoUpdatesScheduleBase):
             if day < 1 or day > max_range:
                 return False
         return True
+
     @model_validator(mode="after")
     def validator(self):
         if self.mode == AutoUpdatesMode.Disabled:

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Региональная таблица</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link href=" https://cdn.jsdelivr.net/npm/air-datepicker@3.5.3/air-datepicker.min.css " rel="stylesheet"> 
+    <link href=" https://cdn.jsdelivr.net/npm/air-datepicker@3.5.3/air-datepicker.min.css " rel="stylesheet">
     <script src=" https://cdn.jsdelivr.net/npm/air-datepicker@3.5.3/air-datepicker.min.js "></script>
     <style>
         .content {
@@ -152,6 +152,7 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
         .hidden {
             display: none !important;
         }
@@ -194,14 +195,17 @@
         .toggle-checkbox:checked + .toggle-switch:before {
             left: 16px;
         }
+
         .toggle-checkbox {
             position: absolute;
             visibility: hidden;
         }
+
         .toggle-label {
             position: relative;
             top: 2px;
         }
+
         .day-btn {
             aspect-ratio: 1;
             color: #000;
@@ -214,13 +218,16 @@
             margin-bottom: 10px;
             width: 7%;
         }
+
         .selected {
             background: #007bff;
             color: #fff !important;
         }
+
         .red-btn {
             background-color: red;
         }
+
         .common-btn {
             color: #000;
             border: none;
@@ -236,6 +243,7 @@
         .visible {
             visibility: visible;
         }
+
         nav.air-datepicker-nav {
             display: none !important;
         }
@@ -258,28 +266,34 @@
 </head>
 <div class="content">
 
-      <!-- Выбор дней обновления -->
+    <!-- Выбор дней обновления -->
     <div class="container">
         <div class="block">
             <label class="toggle">
                 <span class="toggle-label">Запланировать обновления</span>
                 <input class="toggle-checkbox" id="toggle-scheduler" type="checkbox"  >
-<!-- onchange="toggleSchedulerBlock()" -->
                 <div class="toggle-switch"></div>
             </label>
             <div id="updates-scheduler-main-block" class="hidden">
                 <div id="updates-scheduler-main-group">
                     <button id="scheduler-month-day-picker-toggle-btn" class="common-btn">Выбрать дни месяца</button>
                     <button id="scheduler-week-day-picker-toggle-btn" class="common-btn">Выбрать дни недели</button>
+
                     <div id="scheduler-month-day-picker" class="hidden" style="margin: 10px 0;"></div>
                     <div id="scheduler-week-day-picker" class="hidden" style="margin: 10px 0;"></div>
                     <div id="scheduler-time-picker" style="margin: 10px 0;"></div>
+                    <div style="margin: 10px 0;">
+                        <span>
+                            <b>Примечание:</b> время нужно указывать по <b>МСК</b>
+                        </span>
+                    </div>
                 </div>
                 <button id="save-updates-schedule-btn" class="common-btn selected" style="margin: 10px 0;">
                     Сохранить
                 </button>
             </div>
         </div>
+
         <!-- Название списка -->
         <div class="list-name">{{ list_name }}</div>
 
@@ -300,8 +314,8 @@
                         <td>
                         <a href="{{ url_for('get_live_search').include_query_params(list_id=region.list_id, search_system=region.search_system, lr_id=region.id) }}">
                             {{ region_dict[region.lr] }}
-                        </td>
                         </a>
+                        </td>
                         <td>
                             <span class="remove-button" onclick="removeRegion('{{ region.list_id }}', '{{ region.lr }}', '{{ region.search_system }}')">×</span>
                         </td>
@@ -478,8 +492,6 @@
 
         let regionCodes = {};
 
-        console.log('{{ url_for('load_live_search_list') }}', "{{ url_for('get_regions') }}");
-
         // Загружаем словарь регионов с бэка
         fetch("{{ url_for('get_regions') }}")
             .then(response => response.json())
@@ -550,15 +562,15 @@
         }
     }
 
+        const listId = "{{ list_id }}"
 
-    const listId = "{{ list_id }}"
         class ToggleBtn {
             constructor(btnId, elementToToggleId) {
                 this.button = document.getElementById(btnId)
                 this.elementToToggle = document.getElementById(elementToToggleId)
                 this.isHidden = this.elementToToggle.classList.contains("hidden")
                 this.button.addEventListener("click", () => this.toggle())
-            } 
+            }
             onShow(callback) {
                 this.onShowCallback = callback
             }
@@ -574,13 +586,13 @@
                 this.onShowCallback && this.onShowCallback()
                 this.elementToToggle.classList.remove("hidden")
                 this.button.classList.add("selected")
-                this.isHidden = false 
+                this.isHidden = false
             }
             toggle() {
                 this.isHidden ? this.show() : this.hide()
             }
         }
- 
+
         const UpdatesMode = {
             Disabled: "Disabled",
             MonthDays: "MonthDays",
@@ -635,7 +647,6 @@
                 .then(response => response.json())
                 .then(data => {
                     if(!data) {
-                        
                         this.updatesCheckbox.checked = false;
                         return
                     }
@@ -648,8 +659,8 @@
                         if(this.data.mode == UpdatesMode.WeekDays) {
                             this.selectWeekDaysBtn.show()
                             this.data.days.forEach(day => {
-                                if (day < 1 || day > 7) return
-                                this.weekDaysPicker.selectDate(new Date(`${day} Juli 2024`))
+                                if (day < 0 || day > 6) return
+                                this.weekDaysPicker.selectDate(new Date(`${day + 1} Juli 2024`))
                             });
                         }
                         if (this.data.mode == UpdatesMode.MonthDays) {
@@ -660,7 +671,7 @@
                             });
                         }
                     }
-                    
+
                 })
                 .catch(error => console.error('Ошибка при загрузки расписания обновлений:', error))
             }
@@ -684,7 +695,7 @@
                 }))
                 return picker
             }
-            #setupMonthDaysPicker() {        
+            #setupMonthDaysPicker() {
                 return new AirDatepicker('#scheduler-month-day-picker', {
                     multipleDates: true,
                     startDate: "01 Juli 2024",
@@ -704,14 +715,14 @@
                     startDate: "01.01.2024 00:00",
                     inline: true,
                     timepicker: true,
-                    minutesStep: 1,
+                    minutesStep: 15,
                     onlyTimepicker: true,
                     onSelect: ({date, formattedDate, datepicker}) => {
                         this.#hours = date.getHours()
                         this.#timeZoneOffset = date.getTimezoneOffset()
                         this.#minutes = date.getMinutes()
                     }
-                }) 
+                })
                 return timePicker
             }
             #getWeekDaysScheduleRequest() {
@@ -743,7 +754,7 @@
             }
             save() {
                 let request
-                if (this.mode == UpdatesMode.Disabled){ 
+                if (this.mode == UpdatesMode.Disabled){
                     request = this.#getDisabledMoreRequest()
                 }
                 if (this.mode == UpdatesMode.WeekDays){
@@ -780,9 +791,9 @@
         schedulerToggler.addEventListener("change", (e) => {
             !schedulerToggler.checked && (schedulerDates.mode = schedulerToggler.inputMode.Disabled)
         })
-        
+
 
     </script>
-    
+
 </div>
 {% endblock %}

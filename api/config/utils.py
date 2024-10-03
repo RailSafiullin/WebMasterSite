@@ -2,12 +2,24 @@ from sqlalchemy import case, exists, or_, select, and_, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.session import async_session_general
 from sqlalchemy.orm import aliased
+
 from api.auth.models import User, GroupUserAssociation
-from api.config.models import Config, Group, GroupConfigAssociation, List, LiveSearchList, Role, UserQueryCount, ListLrSearchSystem
+from api.config.models import AutoUpdatesMode, Config, Group, GroupConfigAssociation, Role, UserQueryCount, \
+     ListLrSearchSystem, List, LiveSearchList, LiveSearchAutoUpdateSchedule, YandexLr
+from db.session import async_session_general
 from services.load_live_search import main as live_search_main
 
+
+async def load_auto_updates_schedule(session: AsyncSession) -> list[LiveSearchAutoUpdateSchedule, User]:
+    result = await session.execute(
+        select(LiveSearchAutoUpdateSchedule, User)
+        .join(User, LiveSearchAutoUpdateSchedule.user_id == User.id)
+        .where(LiveSearchAutoUpdateSchedule.mode != AutoUpdatesMode.Disabled)
+    )
+    return result.all()
+
+
 async def update_list(user: User, list_id: int):
-    print("UPDATING")
     async with async_session_general() as session:
         live_search_list: LiveSearchList = (
             await session.execute(select(LiveSearchList).where(LiveSearchList.id == list_id))
@@ -17,11 +29,13 @@ async def update_list(user: User, list_id: int):
             select(ListLrSearchSystem)
             .where(ListLrSearchSystem.list_id == live_search_list.id)
         )).scalars().all()
+
         for list_lr in lists_lr:
             lr, search_system = list_lr.lr, list_lr.search_system
             status = await live_search_main(list_lr.id, list_id, main_domain, lr, search_system, user, session)
             if status == 0:
                 return
+
 
 async def load_live_search(user, list_lr_id: int, session: AsyncSession):
     list_lr = (await session.execute(select(ListLrSearchSystem).where(ListLrSearchSystem.id == list_lr_id))).scalars().first()
@@ -32,6 +46,15 @@ async def load_live_search(user, list_lr_id: int, session: AsyncSession):
 
     return await live_search_main(list_lr_id, list_id, main_domain, lr, search_system, user, session)
 
+
+async def load_live_search(user, list_lr_id: int, session: AsyncSession):
+    list_lr = (await session.execute(select(ListLrSearchSystem).where(ListLrSearchSystem.id == list_lr_id))).scalars().first()
+
+    list_id, lr, search_system = list_lr.list_id, list_lr.lr, list_lr.search_system
+
+    main_domain = (await session.execute(select(LiveSearchList.main_domain).where(LiveSearchList.id == list_id))).scalars().first()
+
+    return await live_search_main(list_lr_id, list_id, main_domain, lr, search_system, user, session)
 
 
 async def get_config_names(session: AsyncSession, user: User, group_name):

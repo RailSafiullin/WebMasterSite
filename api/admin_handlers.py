@@ -1,41 +1,40 @@
 from io import BytesIO
 from typing import Optional
+
+from apscheduler.triggers.cron import CronTrigger
 from fastapi import UploadFile, Request
 from fastapi import status
-from api.auth.exceptions import InvalidEmail
-from api.auth.manager import get_user_manager, UserManager
-from api.auth.schemas import UserCreate
-from utils import CommaNewLineSeparatedValues, import_users_from_excel
 from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Request
-from sqlalchemy import and_, column, delete, select, or_, update, insert
+from sqlalchemy import and_, delete, select, or_, update, insert
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
-from sqlalchemy import and_, delete, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.auth.auth_config import current_user, RoleChecker, PermissionRoleChecker
+from api.auth.exceptions import InvalidEmail
+from api.auth.manager import get_user_manager, UserManager
 from api.auth.models import User
+from api.auth.schemas import UserCreate
+from api.config.models import Config, Group, List, ListLrSearchSystem, ListURI, LiveSearchList, LiveSearchListQuery \
+    , UserQueryCount, YandexLr, Role, AutoUpdatesMode
 from api.config.utils import get_all_configs, get_all_groups, get_all_groups_for_user, get_all_roles, get_all_user, \
     get_config_names, get_group_names, get_groups_names_dict, get_lists_names, get_live_search_lists_names, update_list
-from db.session import get_db_general
-from api.config.models import Config, Group, List, ListLrSearchSystem, ListURI, LiveSearchList, LiveSearchListQuery, UserQueryCount, YandexLr, Role, AutoUpdatesMode
+from api.schemas import AutoUpdatesScheduleRead, AutoUpdatesScheduleCreate
+from api.config.models import LiveSearchAutoUpdateSchedule
 from api.query_api.router import router as query_router
 from api.url_api.router import router as url_router
 from api.history_api.router import router as history_router
 from api.merge_api.router import router as merge_router
 from api.live_search_api.router import router as live_search_router
-import config
-from api.config.models import LiveSearchAutoUpdateSchedule
-from api.schemas import AutoUpdatesScheduleRead, AutoUpdatesScheduleCreate
-from scheduler import scheduler, CronTrigger
-from sqlalchemy.exc import IntegrityError
 from db.session import get_db_general
 from utils import CommaNewLineSeparatedValues, import_users_from_excel
+import config
 from config import MONTHLY_REQUEST_LIMIT
 import const
+from scheduler import scheduler
 
 admin_router = APIRouter()
 
@@ -841,6 +840,7 @@ async def batch_register(
         "detail": "Users created successfully",
     }, status_code)
 
+
 @admin_router.post("/list_menu/{list_id}/updates_schedule", status_code=status.HTTP_200_OK)
 async def create_or_update_list_updates_schedule(
     request: Request,
@@ -863,19 +863,22 @@ async def create_or_update_list_updates_schedule(
             ) if auto_update_schedule.days is not None else None,
             mode=auto_update_schedule.mode,
             hours=auto_update_schedule.hours,
-            minutes=auto_update_schedule.minutes)
+            minutes=auto_update_schedule.minutes,
+            user_id=user.id)
+
     if schedule is not None:
         list_updates_schedule = await session.execute(
             update(LiveSearchAutoUpdateSchedule)
             .where(LiveSearchAutoUpdateSchedule.id == schedule.id)
             .values(**values).returning(
-                LiveSearchAutoUpdateSchedule 
+                LiveSearchAutoUpdateSchedule
             )
         )
     else:
         list_updates_schedule = await session.execute(
             insert(LiveSearchAutoUpdateSchedule).values(**values).returning(LiveSearchAutoUpdateSchedule)
         )
+
     list_updates_schedule: LiveSearchAutoUpdateSchedule = list_updates_schedule.scalars().first()
     schedule_id = str(list_updates_schedule.id)
     if scheduler.get_job(schedule_id) is not None:
@@ -889,13 +892,15 @@ async def create_or_update_list_updates_schedule(
         minute=list_updates_schedule.minutes,
         day_of_week=list_updates_schedule.days if list_updates_schedule.mode == AutoUpdatesMode.WeekDays else None,
         day=list_updates_schedule.days if list_updates_schedule.mode == AutoUpdatesMode.MonthDays else None,
+        timezone=scheduler.timezone
     ))
     await session.commit()
+
+
 @admin_router.get("/list_menu/{list_id}/updates_schedule")
 async def get_list_updates_schedule(
     request: Request,
     list_id: int,
-    # auto_update_freq: AutoUpdatesScheduleRead,
     session: AsyncSession = Depends(get_db_general),
     user: User = Depends(current_user)) -> Optional[AutoUpdatesScheduleRead]:
     schedule = await session.execute(
@@ -906,3 +911,5 @@ async def get_list_updates_schedule(
     return None if schedule is None else AutoUpdatesScheduleRead(
         id=schedule.id, mode=schedule.mode, days=schedule.days.split(",") if schedule.days else None, hours=schedule.hours, minutes=schedule.minutes
     )
+
+

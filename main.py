@@ -1,8 +1,8 @@
+from contextlib import asynccontextmanager
+
+from apscheduler.triggers.cron import CronTrigger
 import uvicorn
 from starlette.middleware.sessions import SessionMiddleware
-
-from contextlib import asynccontextmanager
-from datetime import datetime
 
 # import settings
 import config
@@ -19,18 +19,32 @@ from api.auth.schemas import UserRead, UserCreate
 from api.services.router import router as services_router
 
 from api.config.router import router as config_router
-
+from api.config.models import AutoUpdatesMode
+from api.config.utils import load_auto_updates_schedule, update_list
 from api.auth.router import router as auth_router
+from db.session import async_session_general
 from config import SECRET
+from scheduler import scheduler
 
-from scheduler import CronTrigger, scheduler
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler.start()
-    scheduler.add_job(print_scheduler_jobs, trigger=CronTrigger(second="*/10", day_of_week="0,1,2,3"), id="scheduler jobs logger")
+    async with async_session_general() as session:
+        schedules = await load_auto_updates_schedule(session)
+        for schedule, user in schedules:
+            scheduler.add_job(update_list, id=str(schedule.id),
+                args=(user, schedule.list_id),
+                trigger=CronTrigger(
+                    hour=schedule.hours,
+                    minute=schedule.minutes,
+                    day_of_week=schedule.days if schedule.mode == AutoUpdatesMode.WeekDays else None,
+                    day=schedule.days if schedule.mode == AutoUpdatesMode.MonthDays else None,
+                    timezone=scheduler.timezone
+                )
+            )
     yield
-async def print_scheduler_jobs():
-    print(f"time = {datetime.now()} jobs = {scheduler.get_jobs()}")
+
 
 app = FastAPI(
     title="Metrics urls",
