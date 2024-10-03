@@ -83,7 +83,7 @@ class Group(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String, nullable=False)
-
+    id_author = Column(Integer, ForeignKey("user.id"), nullable=True)
     # Используем строку для связи с Config и User
     configs = relationship("Config",
                            secondary='group_config_association',
@@ -94,6 +94,7 @@ class Group(Base):
                          secondary='group_user_association', back_populates="groups",
                          lazy="selectin"
                          )
+    user = relationship("User", primaryjoin="Group.id_author == User.id", lazy="selectin")
 
 class List(Base):
     __tablename__ = "list"
@@ -146,6 +147,7 @@ class AutoUpdatesMode(str, enum.Enum):
     Disabled = "Disabled"
     WeekDays = "WeekDays"
     MonthDays = "MonthDays"
+    
 class LiveSearchAutoUpdateSchedule(Base):
     __tablename__ = "live_search_list_auto_update_schedule"
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)

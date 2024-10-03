@@ -261,17 +261,21 @@
         <div class="row header">
             <div class="cell">#</div>
             <div class="cell">Name</div>
+            <div class="cell">Автор</div>
             <div class="cell">Actions</div>
         </div>
         {% for group in all_groups %}
-        <div class="row">
-            <div class="cell">{{ loop.index }}</div> <!-- Порядковый номер -->
-            <div class="cell">{{ group.name }}</div>
-            <div class="cell">
-                <button class="delete-btn" onclick="deleteGroup('{{ url_for('delete_group', group_id=group.id) }}')">Delete</button>
-                <button class="group-list-btn" data-group-id="{{ group.id }}" onclick="showGroupList(this)">Config List</button>
-            </div>
-        </div>
+            {% if group.user.id == user.id or user.role_info.access_command_panel_full %}
+                <div class="row">
+                    <div class="cell">{{ loop.index }}</div> <!-- Порядковый номер -->
+                    <div class="cell">{{ group.name }}</div>
+                    <div class="cell">{{ group.user.email }}</div>
+                    <div class="cell">
+                        <button class="delete-btn" onclick="deleteGroup('{{ url_for('delete_group', group_id=group.id) }}')">Delete</button>
+                        <button class="group-list-btn" data-group-id="{{ group.id }}" onclick="showGroupList(this)">Config List</button>
+                    </div>
+                </div>
+            {% endif %}
         {% endfor %}
     </div>
     
@@ -287,7 +291,9 @@
                 <label for="groupName">Config Name:</label>
                 <select class="form-control item" id="groupName" name="group_name" required>
                     {% for config in all_configs %}
-                    <option value="{{ config.id }}">{{ config.name }}</option>
+                        {% if config.user.id == user.id or user.role_info.access_command_panel_full %}
+                            <option value="{{ config.id }}">{{ config.name }}</option>
+                        {% endif %}
                     {% endfor %}
                 </select>
             </div>

@@ -261,7 +261,7 @@ async def get_configs(
 ) -> dict:
     query = select(Config.name)
     result = (await session.execute(query)).scalars().all()  # Получаем все значения в виде списка строк
-    return {"configs": result}  # Возвращаем JSON объект с ключом "roles"
+    return {"configs": result} 
 
 
 @router.post("/add-user-to-group")
@@ -514,7 +514,7 @@ async def add_group(
         }
 
     # Создание новой группы
-    new_group = Group(name=group_name)
+    new_group = Group(name=group_name, id_author = user.id)
 
     # Добавление конфигураций
     configs_objects = []
