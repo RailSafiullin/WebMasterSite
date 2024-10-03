@@ -69,9 +69,9 @@ async def get_group_names(session: AsyncSession, user: User):
 async def get_groups_names_dict(
     session: AsyncSession,
 ):
-    group_dict = (await session.execute(select(Group.id, Group.name))).fetchall()
-
-    return dict(group_dict)
+    group_dict = (await session.execute(select(Group.id, Group.name, Group.id_author))).fetchall()
+    result = {id_: (name, id_author) for id_, name, id_author in group_dict}
+    return dict(result)
 
 
 async def get_lists_names(

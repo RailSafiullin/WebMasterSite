@@ -410,8 +410,10 @@
             <div class="form-group">
                 <label for="groupName">Group Name:</label>
                 <select class="form-control item" id="groupName" name="group_name" required>
-                    {% for id, name in groups_dict.items() %}
-                    <option value="{{ id }}">{{ name }}</option>
+                    {% for id, name_id_author in groups_dict.items() %}
+                        {% if name_id_author[1]==user.id or user.role_info.access_command_panel_full  %}
+                            <option value="{{ id }}">{{ name_id_author[0] }}</option>
+                        {% endif %}
                     {% endfor %}
                 </select>
             </div>

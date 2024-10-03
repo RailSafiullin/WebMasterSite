@@ -530,6 +530,10 @@ async def add_group(
 
     # Добавление новой группы в базу данных
     session.add(new_group)
+
+    await session.commit()
+
+    session.add(GroupUserAssociation(user_id=user.id, group_id=new_group.id))
     await session.commit()
 
     return {"status": "success", "group": new_group.id}
