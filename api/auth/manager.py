@@ -15,7 +15,7 @@ from fastapi_users import BaseUserManager, IntegerIDMixin, exceptions
 from requests import Response
 
 from api.auth.models import User
-from api.auth.schemas import UserCreate
+from api.auth.schemas import UserCreate, UserCreateWithRole
 from api.auth.utils import get_user_db
 from api.config.models import UserQueryCount
 from config import SECRET
@@ -51,7 +51,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
         return user
 
-    async def batch_create(self, users_create: Iterable[UserCreate], safe: bool = False):
+    async def batch_create(self, users_create: Iterable[UserCreateWithRole], safe: bool = False):
         """
         Create users in db.
         :raises InvalidEmail
@@ -68,6 +68,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
                 )
                 password = user_dict.pop("password")
                 user_dict["hashed_password"] = self.password_helper.hash(password)
+                user_dict["role"] = user_create.role
                 users_dicts.append(user_dict)
             except (EmailSyntaxError, EmailNotValidError):
                 raise InvalidEmail(invalid_email=user_create.email)

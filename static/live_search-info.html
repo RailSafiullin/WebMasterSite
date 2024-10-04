@@ -36,7 +36,7 @@
             </select>
 
             <span>Запросов осталось: {{ query_count }}</span>
-            {% if user.role_info.access_live_search_full %}
+            {% if user.role_info.access_live_search_full and false %}
                 <button onclick="updateQueryCount()">Обновить</button>
             {% endif %}
         {% endif %}

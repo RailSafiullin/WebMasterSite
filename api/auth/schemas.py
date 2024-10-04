@@ -15,6 +15,8 @@ class UserCreate(schemas.BaseUserCreate):
     username: Optional[str] = None
     email: str
 
+class UserCreateWithRole(UserCreate):
+    role: int    
 
 class UserUpdate(schemas.BaseUserUpdate):
     id: int

@@ -2,7 +2,7 @@ from typing import Generator
 
 from openpyxl import load_workbook
 
-from api.auth.schemas import UserCreate
+from api.auth.schemas import UserCreate, UserCreateWithRole
 
 def import_users_from_excel(file) -> Generator[UserCreate, None, None]:
     """
@@ -11,5 +11,5 @@ def import_users_from_excel(file) -> Generator[UserCreate, None, None]:
     """
     wb = load_workbook(file, read_only=True, data_only=True)
     for row in wb.active.iter_rows(values_only=True):
-        email, username, password = map(lambda value: value if value is None else str(value), row)
-        yield UserCreate(id=-1, email=email, username=username, password=password)
+        email, username, password, role = map(lambda value: value if value is None else str(value), row)
+        yield UserCreateWithRole(id=-1, email=email, username=username, password=password, role=role)

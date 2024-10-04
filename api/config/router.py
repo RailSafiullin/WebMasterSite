@@ -373,7 +373,7 @@ async def edit_user(
         int(formData.get('role')), 
         formData.get('username'), 
         formData.get('is_active'), 
-        formData.get('query_count'))
+        int(formData.get('query_count')))
     user = (await session.execute(select(User).where(User.id == id))).scalars().first()
     user_query_count = (await session.execute(select(UserQueryCount).where(UserQueryCount.user_id == id))).scalars().first()
 
