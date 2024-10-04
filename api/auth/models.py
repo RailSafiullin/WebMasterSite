@@ -18,7 +18,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
             String(length=320), unique=True, index=True, nullable=False,
         )
     username: str = Column(
-        String(length=320), unique=True, index=True,  nullable=True,
+        String(length=320), unique=False, index=True,  nullable=True,
     )
 
     role: int = Column(
