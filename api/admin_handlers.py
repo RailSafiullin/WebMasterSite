@@ -30,7 +30,7 @@ from api.history_api.router import router as history_router
 from api.merge_api.router import router as merge_router
 from api.live_search_api.router import router as live_search_router
 from db.session import get_db_general
-from utils import CommaNewLineSeparatedValues, import_users_from_excel
+from utils import CommaNewLineSeparatedValues, import_users_from_excel, import_users_from_excel_without_password
 import config
 from config import MONTHLY_REQUEST_LIMIT
 import const
@@ -791,7 +791,7 @@ async def batch_register_excel(
         status_code=status.HTTP_201_CREATED):
     try:
         file = await file.read()
-        await user_manager.batch_create(import_users_from_excel(BytesIO(file)))
+        await user_manager.batch_create(import_users_from_excel_without_password(BytesIO(file)))
     except InvalidEmail as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.detail) 
     except IntegrityError as e:
