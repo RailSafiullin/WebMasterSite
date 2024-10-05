@@ -8,7 +8,6 @@ from api.config.models import Config, Group
 
 async def is_update_available(config: Config, group: Group) -> bool:
     response = await load_queries(config.__dict__, group.__dict__)
-    print(response)
     return response["status"] == 200
 
 
