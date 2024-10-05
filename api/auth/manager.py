@@ -51,7 +51,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
         return user
 
-    async def batch_create(self, users_create: Iterable[UserCreateWithRoleWithoutPassword], safe: bool = False):
+    async def batch_create(self, users_create: Iterable[UserCreateWithRole], safe: bool = False):
         """
         Create users in db.
         :raises InvalidEmail
@@ -60,7 +60,6 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         users_dicts = []
         for user_create in users_create:
             try:
-                print(f'user_create = {user_create.email}')
                 user_create.email = validate_email(user_create.email).email 
                 user_dict = (
                     user_create.create_update_dict()
@@ -68,7 +67,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
                     else user_create.create_update_dict_superuser()
                 )
                 password = user_dict.pop("password")
-                if password is not None:
+                if password!="None":
                     user_dict["hashed_password"] = self.password_helper.hash(password)
                 else:
                     user_dict["hashed_password"] = 'NULL'
