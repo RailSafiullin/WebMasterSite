@@ -60,6 +60,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         users_dicts = []
         for user_create in users_create:
             try:
+                print(f'user_create = {user_create.email}')
                 user_create.email = validate_email(user_create.email).email 
                 user_dict = (
                     user_create.create_update_dict()
