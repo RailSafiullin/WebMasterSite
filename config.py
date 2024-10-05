@@ -11,14 +11,15 @@ DB_HOST =os.environ.get( "DB_HOST")
 DB_PORT = os.environ.get("DB_PORT")
 SECRET = os.environ.get("SECRET")
 
-REDIS_HOST = os.environ.get("REDIS_HOST")
-REDIS_PORT = os.environ.get("REDIS_PORT")
-REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD")
-REDIS_DB = os.environ.get("REDIS_DB")
-
 MONTHLY_REQUEST_LIMIT = os.environ.get("MONTHLY_REQUEST_LIMIT")
 
 DATABASE_GENERAL_NAME = os.environ.get("DATABASE_GENERAL_NAME")
+
+DAILY_UPDATE_TIME_ZONE = os.environ.get("DAILY_UPDATE_TIME_ZONE")
+DAILY_UPDATE_HOURS = os.environ.get("DAILY_UPDATE_HOURS")
+DAILY_UPDATE_MINUTES = os.environ.get("DAILY_UPDATE_MINUTES")
+DAILY_UPDATE_MAIN_CONFIG_NAME = os.environ.get("DAILY_UPDATE_MAIN_CONFIG_NAME")
+DAILY_UPDATE_MAIN_GROUP_NAME = os.environ.get("DAILY_UPDATE_MAIN_GROUP_NAME")
 
 @dataclass
 class XMLConfig:
