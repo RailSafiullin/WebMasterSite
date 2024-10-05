@@ -791,7 +791,7 @@ async def batch_register_excel(
         status_code=status.HTTP_201_CREATED):
     try:
         file = await file.read()
-        await user_manager.batch_create(import_users_from_excel_without_password(BytesIO(file)))
+        await user_manager.batch_create(import_users_from_excel(BytesIO(file)))
     except InvalidEmail as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.detail) 
     except IntegrityError as e:
