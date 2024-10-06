@@ -4,7 +4,7 @@ from openpyxl import load_workbook
 
 from api.auth.schemas import UserCreate, UserCreateWithRole
 
-def import_users_from_excel(file) -> Generator[UserCreate, None, None]:
+def import_users_from_excel(file) -> Generator[UserCreateWithRole, None, None]:
     """
     Generator, which converts excel row to UserCreate schema
     :param file: is FileObject
