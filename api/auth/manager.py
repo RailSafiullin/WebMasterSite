@@ -15,7 +15,7 @@ from fastapi_users import BaseUserManager, IntegerIDMixin, exceptions
 from requests import Response
 
 from api.auth.models import User
-from api.auth.schemas import UserCreate, UserCreateWithRole, UserCreateWithRoleWithoutPassword
+from api.auth.schemas import UserCreate, UserCreateWithRole
 from api.auth.utils import get_user_db
 from api.config.models import UserQueryCount
 from config import SECRET
@@ -67,10 +67,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
                     else user_create.create_update_dict_superuser()
                 )
                 password = user_dict.pop("password")
-                if password!="None":
-                    user_dict["hashed_password"] = self.password_helper.hash(password)
-                else:
-                    user_dict["hashed_password"] = 'NULL'
+                user_dict["hashed_password"] = self.password_helper.hash(password)
                 user_dict["role"] = user_create.role
                 users_dicts.append(user_dict)
             except (EmailSyntaxError, EmailNotValidError):
@@ -78,7 +75,6 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
         async with async_session_general() as session:
             try:
-                #print(users_dicts)
                 await session.run_sync(lambda session: session.bulk_insert_mappings(User, users_dicts))
                 await session.commit() 
             except IntegrityError as e:
@@ -108,66 +104,14 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
         existing_user = await self.user_db.get_by_email(user_create.email)
         if existing_user is not None:
-            #print(existing_user.hashed_password)
-            if existing_user.hashed_password=="NULL" :
-                #print(existing_user.hashed_password)
-                safe = False
-                user_dict = (
-                    user_create.create_update_dict()
-                    if safe
-                    else user_create.create_update_dict_superuser()
-                )
-                password = user_dict.pop("password")
-                #print(password)
-                existing_user.hashed_password = self.password_helper.hash(password)
-                
-                #user = (await session.execute(select(User).where(User.id == id))).scalars().first()
-                async with async_session_general() as session:
-                    user = (await session.execute(select(User).where(User.id == existing_user.id))).scalars().first()
-                    user.hashed_password = existing_user.hashed_password
-                    #print(users_dicts)
-                    #await session.run_sync(lambda session: session.bulk_insert_mappings(User, users_dicts))
-                    #await session.commit() 
-                
-                    #user_query_count = (await session.execute(select(UserQueryCount).where(UserQueryCount.user_id == existing_user.id))).scalars().first()
-                    #if email:
-                    #    user.email = email
-                    #if password:
-                    #    password_helper = PasswordHelper()
-                    #    user.hashed_password = password_helper.hash(password)
-                    #if role:
-                    #    user.role = role
-                    #if username:
-                    #    user.username = username
-                    #user.is_active = is_active
-                    #if is_active:
-                    #if not existing_user.query_count:
-                    #    query_count = 0
-                    #if user_query_count:
-                    #    user_query_count.query_count = query_count
-                    #else:
-                    #    user_query_count = UserQueryCount(
-                    #        user_id=user.id,
-                    #        query_count=query_count, 
-                    #        last_update_date=datetime.now()
-                    #)
-                    #session.add(user_query_count)
-                    
-                    await session.commit()
-                    await self.on_after_register(user, request)    
-                
-                return existing_user
-            else:
-                raise exceptions.UserAlreadyExists()
-        else:
             raise exceptions.UserAlreadyExists()
+
         safe = False
         user_dict = (
             user_create.create_update_dict()
             if safe
             else user_create.create_update_dict_superuser()
         )
-        
         password = user_dict.pop("password")
         user_dict["hashed_password"] = self.password_helper.hash(password)
 
