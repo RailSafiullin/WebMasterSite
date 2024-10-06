@@ -30,7 +30,7 @@ from api.history_api.router import router as history_router
 from api.merge_api.router import router as merge_router
 from api.live_search_api.router import router as live_search_router
 from db.session import get_db_general
-from utils import CommaNewLineSeparatedValues, import_users_from_excel, import_users_from_excel_without_password
+from utils import CommaNewLineSeparatedValues, import_users_from_excel
 import config
 from config import MONTHLY_REQUEST_LIMIT
 import const
