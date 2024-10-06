@@ -12,4 +12,4 @@ def import_users_from_excel(file) -> Generator[UserCreateWithRole, None, None]:
     wb = load_workbook(file, read_only=True, data_only=True)
     for row in wb.active.iter_rows(values_only=True):
         email, username, password, role = map(lambda value: value if value is None else str(value), row)
-        yield UserCreateWithRole(id=-1, email=email, username=username, password=password, role=role)
+        yield UserCreateWithRole(id=-1, email=email, username=username, password="None", role=role)
