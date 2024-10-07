@@ -12,6 +12,7 @@ async def is_update_available(config: Config, group: Group) -> bool:
 
 
 async def daily_updates(main_config_name: str, main_group_name: str):
+    print("Running daily updates")
     async with async_session_general() as session:
         config = (await session.execute(
             select(Config).where(Config.name == main_config_name)
@@ -24,8 +25,9 @@ async def daily_updates(main_config_name: str, main_group_name: str):
         if group is None:
             print("group not found")
             return
+        print(f"Trying to update main config: {config.name}")
         if not await is_update_available(config, group):
-            print("no updates for today")
+            print(f"no updates for today for main config: {config.name}")
             return
         configs = (await session.execute(
             select(Config).where(Config.name != main_config_name)
@@ -34,6 +36,7 @@ async def daily_updates(main_config_name: str, main_group_name: str):
     await load_urls(config.__dict__, group_dict)
     await load_history(config.__dict__, group_dict)
     for config in configs:
+        print(f"Updating config: {config.name}")
         config_dict = config.__dict__
         await load_queries(config_dict, group_dict)
         await load_urls(config_dict, group_dict)
