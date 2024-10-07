@@ -363,6 +363,19 @@
         background-color: #004080;
         transform: scale(0.98);
     }
+    .action-btn {
+        color: white;
+        background: #007BFF;
+            border-radius: 4px;
+        }
+    .action-btn:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+    }
+    .action-btn:active {
+        background-color: #004080;
+        transform: scale(0.98);
+    }
     </style>
 
 <div class="container">
@@ -397,7 +410,28 @@
                     <div class="cell">{{ config.user.email }}</div>
                     <div class="cell">
                         <button class="edit-btn" onclick="showEditConfigForm({{ config.id }}, '{{ config.name }}', '{{ config.database_name }}', '{{ config.access_token }}', '{{ config.user_id }}', '{{ config.host_id }}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteConfig('{{ url_for('delete_config', config_id=config.id) }}')">Delete</button>
+                        {% if user.role_info.access_queries_full or user.role_info.access_queries_update %}
+                        <button type="button"
+                               onclick="sendRequest('{{ url_for('load_queries_by_config', config_id=config.id) }}')"
+                                class="action-btn">
+                            Update Data Query
+                        </button>
+                        {% endif %}
+                        {% if not list_name and (user.role_info.access_url_full or user.role_info.access_url_update) %}
+                        <button type="button"
+                               onclick="sendRequest('{{ url_for('load_urls_by_config', config_id=config.id) }}')"
+                                class="action-btn">
+                            Update Data Url
+                        </button>
+                        {% endif %}
+                        {% if user.role_info.access_history_full %}
+                        <button type="button"
+                               onclick="sendRequest('{{ url_for('load_history_by_config', config_id=config.id) }}')"
+                                class="action-btn">
+                            Update Data History
+                        </button>
+                        {% endif %}
+                        <button class="delete-btn" onclick="deleteConfig('{{ url_for('delete_config', config_id=config.id) }}')">Delete</button>
                     </div>
                 </div>
             {% endif %}
@@ -783,5 +817,35 @@
               });
         }
     }
+</script>
+<script>
+    function sendRequest(url) {
+    $('.loader').show();
+    fetch(url)
+        .then(response => {
+            // Проверяем статус ответа
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    // Обработка ошибки в зависимости от статуса
+                    if (response.status === 400) {
+                        throw new Error(errData.detail || 'Bad Request');
+                    }
+                });
+            }
+            return response.json();  // Если статус успешный, возвращаем JSON
+        })
+        .then(data => {
+            console.log('Success:', data);
+            // Обработка успешного ответа
+            $('.loader').hide();
+            alert(data.message)
+            window.location.reload();  // Обновление страницы
+        })
+        .catch((error) => {
+            alert(error.message);
+            // Обработка ошибки
+            $('.loader').hide();
+        });
+}
 </script>
 {% endblock %}

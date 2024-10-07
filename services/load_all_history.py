@@ -9,6 +9,7 @@ from api.actions.indicators import _add_new_indicators, _add_top
 from api.actions.metrics_queries import _get_top_data_query
 from api.actions.metrics_url import _get_top_data_urls
 from api.actions.top import get_last_date_update_for
+from config import DB_HOST
 from db.models import QueryIndicator, QueryUrlTop
 
 from db.session import connect_db
@@ -116,8 +117,7 @@ async def add_top(async_session):
     await _add_top(add_values, async_session)
 
 
-async def main(request_session):
-    config, group = request_session["config"], request_session["group"]
+async def load_history(config, group):
     DATABASE_NAME, ACCESS_TOKEN, USER_ID, HOST_ID, group = (config['database_name'],
                                                             config['access_token'],
                                                             config['user_id'],
@@ -133,6 +133,10 @@ async def main(request_session):
     await add_top(async_session)
     print("Выгрузка завершена")
 
+
+async def main(request_session):
+    config, group = request_session["config"], request_session["group"]
+    return await load_history(config, group)
 
 if __name__ == '__main__':
     asyncio.run(main())
