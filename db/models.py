@@ -3,8 +3,8 @@ from sqlalchemy import Float, Enum, ARRAY
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy import Integer
-from sqlalchemy import DateTime, ForeignKey
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import DateTime
+from sqlalchemy.orm import declarative_base
 
 ##############################
 # BLOCK WITH DATABASE MODELS #
@@ -16,9 +16,7 @@ Base = declarative_base()
 class Url(Base):
     __tablename__ = "url"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
     url = Column(String, nullable=False, unique=True, primary_key=True)
-    metrics = relationship("Metrics", back_populates="url_relation")
 
 
 class Metrics(Base):
@@ -26,7 +24,6 @@ class Metrics(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     url = Column(String, nullable=False)
-    url_id = Column(Integer, ForeignKey('url.id'), nullable=False)
     date = Column(DateTime, nullable=False, default=datetime.now)
     position = Column(Float, nullable=False)
     ctr = Column(Float, nullable=False)
@@ -34,29 +31,24 @@ class Metrics(Base):
     demand = Column(Float, nullable=False)
     clicks = Column(Float, nullable=False)
 
-    url_relation = relationship("Url", back_populates="metrics")
 
 class Query(Base):
     __tablename__ = "query"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    query = Column(String, nullable=False, unique=True)
-    metrics_queries = relationship("MetricsQuery", back_populates="query_relation")
+    query = Column(String, nullable=False, unique=True, primary_key=True)
+
 
 class MetricsQuery(Base):
     __tablename__ = "metrics_query"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     query = Column(String, nullable=False)
-    query_id = Column(Integer, ForeignKey('query.id'), nullable=False)
     date = Column(DateTime, nullable=False, default=datetime.now)
     position = Column(Float, nullable=False)
     ctr = Column(Float, nullable=False)
     impression = Column(Float, nullable=False)
     demand = Column(Float, nullable=False)
     clicks = Column(Float, nullable=False)
-
-    query_relation = relationship("Query", back_populates="metrics_queries")
 
 
 class QueryIndicator(Base):

@@ -371,7 +371,7 @@ async def show_live_search(
     request: Request,
     user=Depends(current_user),
     session: AsyncSession = Depends(get_db_general),
-    #required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
+    required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
 ):
     config_id = request.session["config"]["config_id"]
     group_id = request.session["group"]["group_id"]
@@ -476,7 +476,7 @@ async def show_edit_live_search(
     list_id: int,
     user=Depends(current_user),
     session: AsyncSession = Depends(get_db_general),
-    #required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
+    required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
 ):
 
     group_name = request.session["group"].get("name", "")
@@ -505,7 +505,7 @@ async def delete_live_search_record(
     query: dict,
     user=Depends(current_user),
     session: AsyncSession = Depends(get_db_general),
-    #required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
+    required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
 ):
     query_model = (await session.execute(select(LiveSearchListQuery).where(and_(LiveSearchListQuery.query == query["query"], LiveSearchListQuery.list_id == list_id)))).scalars().first()
 
@@ -526,7 +526,7 @@ async def change_live_search_record(
     data: dict,
     user=Depends(current_user),
     session: AsyncSession = Depends(get_db_general),
-    #required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
+    required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
 ):
     print(data)
 
@@ -551,7 +551,7 @@ async def add_live_search_record(
     data: dict,
     user=Depends(current_user),
     session: AsyncSession = Depends(get_db_general),
-    #required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
+    required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
 ):
     record = LiveSearchListQuery(
         query=data["uri"].strip(),
@@ -574,7 +574,7 @@ async def show_list_menu(
     list_id: int,
     user=Depends(current_user),
     session: AsyncSession = Depends(get_db_general),
-    #required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
+    required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
 ):
     group_name = request.session["group"].get("name", "")
     config_names = [elem[0] for elem in (await get_config_names(session, user, group_name))]
@@ -607,7 +607,7 @@ async def add_lr_list(
     data: dict,
     user=Depends(current_user),
     session: AsyncSession = Depends(get_db_general),
-    #required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
+    required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
 ):
     list_id, region_code, search_system = data.values()
     list_id, region_code = int(list_id), int(region_code)
@@ -632,7 +632,7 @@ async def delete_lr_list(
     data: dict,
     user=Depends(current_user),
     session: AsyncSession = Depends(get_db_general),
-    #required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
+    required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
 ):
     print(data)
     list_id, region_code, search_system = data.values()
@@ -687,7 +687,7 @@ async def get_regions(
     request: Request,
     user=Depends(current_user),
     session: AsyncSession = Depends(get_db_general),
-    #required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
+    required: bool = Depends(RoleChecker(required_permissions={"User", "Administrator", "Superuser", "Search"}))
 ):
     regions = (await session.execute(select(YandexLr))).scalars().all()
     region_dict = {region.Geo: region.Geoid for region in regions}
