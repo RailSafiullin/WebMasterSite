@@ -31,6 +31,8 @@ async def daily_updates(main_config_name: str, main_group_name: str):
             select(Config).where(Config.name != main_config_name)
         )).scalars().all()
     group_dict = group.__dict__
+    await load_urls(config.__dict__, group_dict)
+    await load_history(config.__dict__, group_dict)
     for config in configs:
         config_dict = config.__dict__
         await load_queries(config_dict, group_dict)
