@@ -25,8 +25,7 @@ class Metrics(Base):
     __tablename__ = "metrics"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    url = Column(String, nullable=False)
-    url_id = Column(Integer, ForeignKey('url.id'), nullable=False)
+    url_id = Column(Integer, ForeignKey('url.id'), nullable=False, unique=True)
     date = Column(DateTime, nullable=False, default=datetime.now)
     position = Column(Float, nullable=False)
     ctr = Column(Float, nullable=False)
@@ -47,8 +46,7 @@ class MetricsQuery(Base):
     __tablename__ = "metrics_query"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    query = Column(String, nullable=False)
-    query_id = Column(Integer, ForeignKey('query.id'), nullable=False)
+    query_id = Column(Integer, ForeignKey('query.id'), nullable=False, unique=True)
     date = Column(DateTime, nullable=False, default=datetime.now)
     position = Column(Float, nullable=False)
     ctr = Column(Float, nullable=False)
