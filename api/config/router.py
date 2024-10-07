@@ -173,7 +173,8 @@ async def add_role(
         request: Request,
         formData: dict,
         user=Depends(current_user),
-        session: AsyncSession = Depends(get_db_general
+        session: AsyncSession = Depends(get_db_general),
+        required: bool = Depends(RoleChecker(required_permissions={"Superuser"})
 )):
     new_role = Role(name=formData['role_name'])
     session.add(new_role)
@@ -689,7 +690,6 @@ async def delete_config(
 
 
     
-
 
 
 
