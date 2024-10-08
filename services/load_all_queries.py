@@ -19,9 +19,27 @@ from const import date_format
 
 
 async def add_data(data, last_update_date, async_session, mx_date=None):
+    print(data)
+    
     for query in data['text_indicator_to_statistics']:
         query_name = query['text_indicator']['value']
-        new_url = [Query(query=query_name)]
+        
+        # Попытка найти существующую запись Query или создать новую
+        async with async_session() as session:
+            existing_query = await session.execute(
+                select(Query).filter_by(query=query_name)
+            )
+            existing_query = existing_query.scalar_one_or_none()
+            
+            if not existing_query:
+                # Если Query не существует, создаём новую запись
+                new_query = Query(query=query_name)
+                session.add(new_query)
+                await session.commit()
+                query_id = new_query.id
+            else:
+                query_id = existing_query.id
+
         metrics = []
         date = query['statistics'][0]["date"]
         data_add = {
@@ -42,7 +60,7 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                     mx_date[0] = max(mx_date[0], date)
                 if date > last_update_date:
                     metrics.append(MetricsQuery(
-                        query=query_name,
+                        query_id=query_id,  # Используем query_id вместо query
                         date=date,
                         ctr=data_add['ctr'],
                         position=data_add['position'],
@@ -71,8 +89,10 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                 data_add["ctr"] = el["value"]
             elif field == "POSITION":
                 data_add["position"] = el["value"]
-        await _add_new_urls(new_url, async_session)
+
+        # Сохраняем метрики и Query
         await _add_new_metrics(metrics, async_session)
+
 
 
 async def get_data_by_page(page, last_update_date, URL, ACCESS_TOKEN, async_session):
