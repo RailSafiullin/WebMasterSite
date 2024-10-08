@@ -34,6 +34,10 @@ class Metrics(Base):
     clicks = Column(Float, nullable=False)
 
     url_relation = relationship("Url", back_populates="metrics")
+    # Обеспечиваем обратную совместимость с полем url
+    @property
+    def url(self):
+        return self.url_relation.url  # Возвращаем поле url из таблицы url
 
 class Query(Base):
     __tablename__ = "query"
@@ -41,6 +45,7 @@ class Query(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     query = Column(String, nullable=False, unique=True)
     metrics_queries = relationship("MetricsQuery", back_populates="query_relation")
+    
 
 class MetricsQuery(Base):
     __tablename__ = "metrics_query"
@@ -55,7 +60,10 @@ class MetricsQuery(Base):
     clicks = Column(Float, nullable=False)
 
     query_relation = relationship("Query", back_populates="metrics_queries")
-
+    # Обеспечиваем обратную совместимость с полем query
+    @property
+    def query(self):
+        return self.query_relation.query  # Возвращаем поле query из таблицы Query
 
 class QueryIndicator(Base):
     __tablename__ = "query_indicator"
