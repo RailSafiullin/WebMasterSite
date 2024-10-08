@@ -61,9 +61,17 @@ class UrlDAL:
                 select(ListURI.uri).where(ListURI.list_id == list_id)
             )).scalars().all()
             
-            filter_query = Url.url.in_(uri_list)
+            #filter_query = Url.url.in_(uri_list)
 
-            filter_query_result = Metrics.url.in_(uri_list)
+            #filter_query_result = Metrics.url.in_(uri_list)
+
+            url_id_list = (await general_db.execute(
+                select(Url.id).where(Url.url.in_(uri_list)))).scalars().all()
+
+            # Фильтрация по Url.id на основе uri_list
+            if url_id_list:
+                filter_query = Url.id.in_(url_id_list)
+                filter_query_result = Metrics.url_id.in_(url_id_list)
 
         if metric_type == "P":
             pointer = Metrics.position
@@ -80,7 +88,7 @@ class UrlDAL:
         
         sub_query = select(Url)
 
-        sub_query_result = select(Metrics.url)
+        sub_query_result = select(Url).join(MetricsQuery, MetricsQuery.query_id == Url.id)
             
         if filter_query is not None:
             sub_query = sub_query.filter(filter_query)
@@ -91,9 +99,9 @@ class UrlDAL:
             
             sub = sub_query.offset(page).limit(per_page).subquery()
             query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
-                        Metrics.ctr, sub).join(sub,
-                                                    Metrics.url == sub.c.url).group_by(
-                sub.c.url,
+                        Metrics.ctr, sub.c.url).join(sub,
+                                                    Metrics.url_id == sub.c.id).group_by(
+                sub.c.id, sub.c.url,  
                 Metrics.date,   
                 Metrics.position,
                 Metrics.clicks,
@@ -104,12 +112,12 @@ class UrlDAL:
         elif state == "decrease":
             if state_type == "date":
 
-                sub = sub_query_result.where(Metrics.date == state_date).order_by(desc(pointer)).offset(page).limit(per_page).subquery()
+                sub = sub_query_result.where(Metrics.date == state_date).group_by(Url.url, Url.id).order_by(desc(pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
-                            Metrics.ctr, sub).join(sub,
-                                                        Metrics.url == sub.c.url).group_by(
-                    sub.c.url,
+                            Metrics.ctr, sub.c.url).join(sub,
+                                                        Metrics.url_id == sub.c.id).group_by(
+                    sub.c.id, sub.c.url,
                     Metrics.date,
                     Metrics.position,
                     Metrics.clicks,
@@ -119,13 +127,13 @@ class UrlDAL:
             else:
 
                 sub = sub_query_result.where(
-                    and_(Metrics.date >= date_start, Metrics.date <= date_end)).group_by(Metrics.url).order_by(
+                    and_(Metrics.date >= date_start, Metrics.date <= date_end)).group_by(Url.url, Url.id).order_by(
                     desc(result_pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
-                            Metrics.ctr, sub).join(sub,
-                                                        Metrics.url == sub.c.url).group_by(
-                    sub.c.url,
+                            Metrics.ctr, sub.c.url).join(sub,
+                                                        Metrics.url_id == sub.c.id).group_by(
+                    sub.c.id, sub.c.url,
                     Metrics.date,
                     Metrics.position,
                     Metrics.clicks,
@@ -141,12 +149,12 @@ class UrlDAL:
                     )
             if state_type == "date":
 
-                sub = sub_query_result.where(Metrics.date == state_date).order_by(asc(pointer)).offset(page).limit(per_page).subquery()
+                sub = sub_query_result.where(Metrics.date == state_date).group_by(Url.url, Url.id).order_by(asc(pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
-                            Metrics.ctr, sub).join(sub,
-                                                        Metrics.url == sub.c.url).group_by(
-                    sub.c.url,
+                            Metrics.ctr, sub.c.url).join(sub,
+                                                        Metrics.url_id == sub.c.id).group_by(
+                    sub.c.id, sub.c.url,
                     Metrics.date,
                     Metrics.position,
                     Metrics.clicks,
@@ -156,13 +164,13 @@ class UrlDAL:
             else:
 
                 sub = sub_query_result.where(
-                    and_(Metrics.date >= date_start, Metrics.date <= date_end)).group_by(Metrics.url).order_by(
+                    and_(Metrics.date >= date_start, Metrics.date <= date_end)).group_by(Url.url, Url.id).order_by(
                     asc(result_pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
-                            Metrics.ctr, sub).join(sub,
-                                                        Metrics.url == sub.c.url).group_by(
-                    sub.c.url,
+                            Metrics.ctr, sub.c.url).join(sub,
+                                                        Metrics.url_id == sub.c.id).group_by(
+                    sub.c.id, sub.c.url,
                     Metrics.date,
                     Metrics.position,
                     Metrics.clicks,
@@ -192,6 +200,7 @@ class UrlDAL:
         
         filter_query = None
 
+
         if list_name != "None":
             list_id = (await general_db.execute(
                 select(List_model.id).where(List_model.name == list_name)
@@ -200,11 +209,18 @@ class UrlDAL:
             uri_list = (await general_db.execute(
                 select(ListURI.uri).where(ListURI.list_id == list_id)
             )).scalars().all()
+            
+            #filter_query = Url.url.in_(uri_list)
 
+            #filter_query_result = Metrics.url.in_(uri_list)
 
-            filter_query = Url.url.in_(uri_list)
+            url_id_list = (await general_db.execute(
+                select(Url.id).where(Url.url.in_(uri_list)))).scalars().all()
 
-            filter_query_result = Metrics.url.in_(uri_list)
+            # Фильтрация по Url.id на основе uri_list
+            if url_id_list:
+                filter_query = Url.id.in_(url_id_list)
+                filter_query_result = Metrics.url_id.in_(url_id_list)
 
         if metric_type == "P":
             pointer = Metrics.position
@@ -221,7 +237,7 @@ class UrlDAL:
         
         sub_query = select(Url)
 
-        sub_query_result = select(Metrics.url)
+        sub_query_result = select(Url).join(MetricsQuery, MetricsQuery.query_id == Url.id)
             
         if filter_query is not None:
             sub_query = sub_query.filter(filter_query)
@@ -233,8 +249,8 @@ class UrlDAL:
                 per_page).subquery()
             query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
                         Metrics.ctr, sub).join(sub,
-                                                    Metrics.url == sub.c.url).group_by(
-                sub.c.url,
+                                                    Metrics.url_id == sub.c.id).group_by(
+                sub.c.id, sub.c.url,
                 Metrics.date,
                 Metrics.position,
                 Metrics.clicks,
@@ -245,12 +261,12 @@ class UrlDAL:
         elif state == "decrease":
             if state_type == "date":
                 
-                sub = sub_query_result.filter(Metrics.url.like(f"%{search_text.strip()}%")).where(Metrics.date == state_date).order_by(desc(pointer)).offset(page).limit(per_page).subquery()
+                sub = sub_query_result.filter(Url.url.like(f"%{search_text.strip()}%")).where(Metrics.date == state_date).group_by(Url.url, Url.id).order_by(desc(pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
-                            Metrics.ctr, sub).join(sub,
-                                                        Metrics.url == sub.c.url).group_by(
-                    sub.c.url,
+                            Metrics.ctr, sub.c.url).join(sub,
+                                                        Metrics.url_id == sub.c.id).group_by(
+                    sub.c.id, sub.c.url,
                     Metrics.date,
                     Metrics.position,
                     Metrics.clicks,
@@ -259,14 +275,14 @@ class UrlDAL:
                 ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start))
             else:
 
-                sub = sub_query_result.filter(Metrics.url.like(f"%{search_text.strip()}%")).where(
-                    and_(Metrics.date >= date_start, Metrics.date <= date_end)).group_by(Metrics.url).order_by(
+                sub = sub_query_result.filter(Url.url.like(f"%{search_text.strip()}%")).where(
+                    and_(Metrics.date >= date_start, Metrics.date <= date_end)).group_by(Url.url, Url.id).order_by(
                     desc(result_pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
-                            Metrics.ctr, sub).join(sub,
-                                                        Metrics.url == sub.c.url).group_by(
-                    sub.c.url,
+                            Metrics.ctr, sub.c.url).join(sub,
+                                                        Metrics.url_id == sub.c.id).group_by(
+                    sub.c.id, sub.c.url,
                     Metrics.date,
                     Metrics.position,
                     Metrics.clicks,
@@ -282,12 +298,12 @@ class UrlDAL:
                     )
             if state_type == "date":
 
-                sub = sub_query_result.filter(Metrics.url.like(f"%{search_text.strip()}%")).where(Metrics.date == state_date).order_by(asc(pointer)).offset(page).limit(per_page).subquery()
+                sub = sub_query_result.filter(Url.url.like(f"%{search_text.strip()}%")).where(Metrics.date == state_date).group_by(Url.url, Url.id).order_by(asc(pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
-                            Metrics.ctr, sub).join(sub,
-                                                        Metrics.url == sub.c.url).group_by(
-                    sub.c.url,
+                            Metrics.ctr, sub.c.url).join(sub,
+                                                        Metrics.url_id == sub.c.id).group_by(
+                    sub.c.id, sub.c.url,
                     Metrics.date,
                     Metrics.position,
                     Metrics.clicks,
@@ -296,14 +312,14 @@ class UrlDAL:
                 ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start))
             else:
 
-                sub = sub_query_result.filter(Metrics.url.like(f"%{search_text.strip()}%")).where(
-                    and_(Metrics.date >= date_start, Metrics.date <= date_end)).group_by(Metrics.url).order_by(
+                sub = sub_query_result.filter(Url.url.like(f"%{search_text.strip()}%")).where(
+                    and_(Metrics.date >= date_start, Metrics.date <= date_end)).group_by(Url.url, Url.id).order_by(
                     asc(result_pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression,
-                            Metrics.ctr, sub).join(sub,
-                                                        Metrics.url == sub.c.url).group_by(
-                    sub.c.url,
+                            Metrics.ctr, sub.c.url).join(sub,
+                                                        Metrics.url_id == sub.c.id).group_by(
+                    sub.c.id, sub.c.url,
                     Metrics.date,
                     Metrics.position,
                     Metrics.clicks,
@@ -337,8 +353,15 @@ class UrlDAL:
             uri_list = (await general_db.execute(
                 select(ListURI.uri).where(ListURI.list_id == list_id)
             )).scalars().all()
+            
+            #filter_query = Url.url.in_(uri_list)
+            url_id_list = (await general_db.execute(
+                select(Url.id).where(Url.url.in_(uri_list)))).scalars().all()
 
-            filter_query = Url.url.in_(uri_list)
+            # Фильтрация по Url.id на основе uri_list
+            if url_id_list:
+                filter_query = Url.id.in_(url_id_list)
+
         
         sub_query = select(Url)
             
@@ -351,9 +374,9 @@ class UrlDAL:
         else:
             sub = sub_query.order_by(Url.url).offset(page).limit(
                 per_page).subquery()
-        query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression, Metrics.ctr, sub).join(sub,
-                                                                                                                  Metrics.url == sub.c.url).group_by(
-            sub.c.url,
+        query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression, Metrics.ctr, sub.c.url).join(sub,
+                                                                                                                  Metrics.url_id == sub.c.id).group_by(
+            sub.c.id, sub.c.url,
             Metrics.date,
             Metrics.position,
             Metrics.clicks,
@@ -401,9 +424,9 @@ class UrlDAL:
         else:
             sub = sub_query.filter(Url.url.like(f"%{search_text.strip()}%")).order_by(Url.url).offset(page).limit(
                 per_page).subquery()
-        query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression, Metrics.ctr, sub).join(sub,
-                                                                                                                  Metrics.url == sub.c.url).group_by(
-            sub.c.url,
+        query = select(Metrics.date, Metrics.position, Metrics.clicks, Metrics.impression, Metrics.ctr, sub.c.url).join(sub,
+                                                                                                                  Metrics.url_id == sub.c.id).group_by(
+            sub.c.id, sub.c.url,
             Metrics.date,
             Metrics.position,
             Metrics.clicks,
@@ -436,7 +459,7 @@ class UrlDAL:
 
         sub = sub_query.filter(Url.url.like(f"%{search_text.strip()}%")).subquery()
         query = select(Metrics.date, Metrics.clicks, Metrics.impression
-                    ).join(sub, Metrics.url == sub.c.url
+                    ).join(sub, Metrics.url_id == sub.c.id
                     ).group_by(Metrics.date,
                     ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start))
         
@@ -444,7 +467,7 @@ class UrlDAL:
                     func.sum(Metrics.clicks).label('total_clicks'),
                     func.sum(Metrics.impression).label('total_impressions'),
                     
-                    ).join(sub, Metrics.url == sub.c.url
+                    ).join(sub, Metrics.url_id == sub.c.id
                     ).group_by(Metrics.date,
                     ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start))
         
@@ -482,7 +505,7 @@ class UrlDAL:
         query = select(Metrics.date, 
                     func.sum(Metrics.clicks).label('total_clicks'),
                     func.sum(Metrics.impression).label('total_impressions'),
-                    ).join(sub, Metrics.url == sub.c.url
+                    ).join(sub, Metrics.url_id == sub.c.id
                     ).group_by(Metrics.date,
                     ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start)      
                 )  
@@ -517,7 +540,7 @@ class UrlDAL:
         sub = sub_query.filter(Url.url.like(f"%{search_text.strip()}%")).subquery()
 
         sub_count_query = select(Metrics.date.label("date"), func.count().label("count_line")                
-                ).join(sub, Metrics.url == sub.c.url
+                ).join(sub, Metrics.url_id == sub.c.id
                 ).where(Metrics.position > 0
                 ).group_by(Metrics.date
                 ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start)
@@ -551,7 +574,7 @@ class UrlDAL:
         sub = sub_query.subquery()    
 
         sub_count_query = select(Metrics.date.label("date"), func.count().label("count_line")                
-                ).join(sub, Metrics.url == sub.c.url
+                ).join(sub, Metrics.url_id == sub.c.id
                 ).where(Metrics.position > 0
                 ).group_by(Metrics.date
                 ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start)
