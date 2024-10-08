@@ -65,7 +65,7 @@ class UrlDAL:
 
             #filter_query_result = Metrics.url.in_(uri_list)
 
-            url_id_list = (await general_db.execute(
+            url_id_list = (await self.db_session.execute(
                 select(Url.id).where(Url.url.in_(uri_list)))).scalars().all()
 
             # Фильтрация по Url.id на основе uri_list
@@ -214,7 +214,7 @@ class UrlDAL:
 
             #filter_query_result = Metrics.url.in_(uri_list)
 
-            url_id_list = (await general_db.execute(
+            url_id_list = (await self.db_session.execute(
                 select(Url.id).where(Url.url.in_(uri_list)))).scalars().all()
 
             # Фильтрация по Url.id на основе uri_list
@@ -355,7 +355,7 @@ class UrlDAL:
             )).scalars().all()
             
             #filter_query = Url.url.in_(uri_list)
-            url_id_list = (await general_db.execute(
+            url_id_list = (await self.db_session.execute(
                 select(Url.id).where(Url.url.in_(uri_list)))).scalars().all()
 
             # Фильтрация по Url.id на основе uri_list
