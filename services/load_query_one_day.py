@@ -4,7 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 import requests
 from sqlalchemy.exc import IntegrityError
-
+from sqlalchemy import select
 from db.models import Query
 from db.models import MetricsQuery
 from db.session import async_session
@@ -24,7 +24,25 @@ URL = f"https://api.webmaster.yandex.net/v4/user/{USER_ID}/hosts/{HOST_ID}/query
 async def add_data(data, date):
     for query in data['text_indicator_to_statistics']:
         query_name = query['text_indicator']['value']
-        new_url = [Query(query=query_name)]
+    
+        try:
+            async with async_session() as session:
+                existing_query = await session.execute(
+                    select(Query).filter_by(query=query_name)
+                )
+                existing_query = existing_query.scalar_one_or_none()
+                
+                if not existing_query:
+                    # Если Query не существует, создаём новую запись
+                    new_query = Query(query=query_name)
+                    session.add(new_query)
+                    await session.commit()
+                    query_id = new_query.id
+                else:
+                    query_id = existing_query.id
+        except IntegrityError:
+            pass
+        
         metrics = []
         data_add = {
             "date": date,
@@ -48,7 +66,7 @@ async def add_data(data, date):
                 elif field == "POSITION":
                     data_add["position"] = el["value"]
         metrics.append(MetricsQuery(
-            query=query_name,
+            query_id=query_id,
             date=datetime.strptime(date, date_format),
             ctr=data_add['ctr'],
             position=data_add['position'],
@@ -56,10 +74,7 @@ async def add_data(data, date):
             demand=data_add['demand'],
             clicks=data_add['clicks']
         ))
-        try:
-            await _add_new_urls(new_url, async_session)
-        except IntegrityError:
-            pass
+        
         await _add_new_metrics(metrics, async_session)
 
 

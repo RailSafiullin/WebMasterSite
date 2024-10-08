@@ -19,7 +19,6 @@ from const import date_format
 
 
 async def add_data(data, last_update_date, async_session, mx_date=None):
-    print(data)
     
     for query in data['text_indicator_to_statistics']:
         query_name = query['text_indicator']['value']

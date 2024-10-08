@@ -3,7 +3,7 @@ import asyncio
 from datetime import datetime
 import requests
 from sqlalchemy.exc import IntegrityError
-
+from sqlalchemy import select
 from db.models import Url
 from db.models import Metrics
 from db.session import async_session
@@ -23,7 +23,21 @@ URL = f"https://api.webmaster.yandex.net/v4/user/{USER_ID}/hosts/{HOST_ID}/query
 async def add_data(data, date):
     for query in data['text_indicator_to_statistics']:
         query_name = query['text_indicator']['value']
-        new_url = [Url(url=query_name)]
+
+        url_id = (await async_session.execute(
+            select(Url.id).where(Url.url == query_name)
+        )).scalars().first()
+        
+        try:        
+            if not url_id:
+                # Если URL нет в базе, добавляем его
+                new_url = Url(url=query_name)
+                async_session.add(new_url)
+                await async_session.commit()  # нужно закоммитить, чтобы получить id
+                await async_session.refresh(new_url)  # обновляем объект new_url с id
+                url_id = new_url.id
+        except IntegrityError:
+            pass
         metrics = []
         data_add = {
             "date": date,
@@ -47,7 +61,7 @@ async def add_data(data, date):
                 elif field == "POSITION":
                     data_add["position"] = el["value"]
         metrics.append(Metrics(
-            url=query_name,
+            url_id=url_id,
             date=datetime.strptime(date, date_format),
             ctr=data_add['ctr'],
             position=data_add['position'],
@@ -55,10 +69,6 @@ async def add_data(data, date):
             demand=data_add['demand'],
             clicks=data_add['clicks']
         ))
-        try:
-            await _add_new_urls(new_url, async_session)
-        except IntegrityError:
-            pass
         await _add_new_metrics(metrics, async_session)
 
 

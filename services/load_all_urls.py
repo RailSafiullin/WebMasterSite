@@ -22,7 +22,19 @@ from const import date_format
 async def add_data(data, last_update_date, async_session, mx_date=None):
     for query in data['text_indicator_to_statistics']:
         query_name = query['text_indicator']['value']
-        new_url = [Url(url=query_name)]
+        
+        # Проверяем, есть ли уже этот URL в базе, если нет — добавляем
+        url_id = (await async_session.execute(
+            select(Url.id).where(Url.url == query_name)
+        )).scalars().first()
+        
+        if not url_id:
+            new_url = Url(url=query_name)
+            async_session.add(new_url)
+            await async_session.commit()  
+            await async_session.refresh(new_url)
+            url_id = new_url.id
+        
         metrics = []
         date = query['statistics'][0]["date"]
         data_add = {
@@ -43,7 +55,7 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                     mx_date[0] = max(mx_date[0], date)
                 if date > last_update_date:
                     metrics.append(Metrics(
-                        url=query_name,
+                        url_id=url_id,  # Используем url_id вместо url
                         date=date,
                         ctr=data_add['ctr'],
                         position=data_add['position'],
@@ -72,8 +84,9 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                 data_add["ctr"] = el["value"]
             elif field == "POSITION":
                 data_add["position"] = el["value"]
-        await _add_new_urls(new_url, async_session)
+
         await _add_new_metrics(metrics, async_session)
+
 
 
 async def get_data_by_page(page, last_update_date, URL, ACCESS_TOKEN, async_session):
