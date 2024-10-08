@@ -23,17 +23,20 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
     for query in data['text_indicator_to_statistics']:
         query_name = query['text_indicator']['value']
         
-        # Проверяем, есть ли уже этот URL в базе, если нет — добавляем
-        url_id = (await async_session.execute(
-            select(Url.id).where(Url.url == query_name)
-        )).scalars().first()
-        
-        if not url_id:
-            new_url = Url(url=query_name)
-            async_session.add(new_url)
-            await async_session.commit()  
-            await async_session.refresh(new_url)
-            url_id = new_url.id
+        async with async_session() as session:
+            existing_url = await session.execute(
+                select(Url).filter_by(url=query_name)
+            )
+            existing_url = existing_url.scalar_one_or_none()
+            
+            if not existing_url:
+                # Если Url не существует, создаём новую запись
+                new_query = Url(url=query_name)
+                session.add(new_query)
+                await session.commit()
+                url_id = new_query.id
+            else:
+                url_id = existing_url.id
         
         metrics = []
         date = query['statistics'][0]["date"]
