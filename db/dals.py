@@ -88,7 +88,7 @@ class UrlDAL:
         
         sub_query = select(Url)
 
-        sub_query_result = select(Url).join(MetricsQuery, MetricsQuery.query_id == Url.id)
+        sub_query_result = select(Url).join(MetricsQuery, MetricsQuery.url_id == Url.id)
             
         if filter_query is not None:
             sub_query = sub_query.filter(filter_query)
@@ -237,7 +237,7 @@ class UrlDAL:
         
         sub_query = select(Url)
 
-        sub_query_result = select(Url).join(MetricsQuery, MetricsQuery.query_id == Url.id)
+        sub_query_result = select(Url).join(MetricsQuery, MetricsQuery.url_id == Url.id)
             
         if filter_query is not None:
             sub_query = sub_query.filter(filter_query)
