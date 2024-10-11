@@ -27,6 +27,8 @@ from const import date_format_out, date_format_2
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import numpy as np
+from scipy import stats
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -780,9 +782,24 @@ async def get_total_sum_urls(
     clean_data.append(impressions)
     clean_data.append(not_void)
 
+        # Преобразуем даты в числовые индексы
+    dates = list(clicks.keys())
+    values = list(clicks.values())
+    x_values = np.arange(len(values))  # Индексы для дат
+
+    # Линейная регрессия для нахождения линии тренда
+    slope, intercept, _, _, _ = stats.linregress(x_values, values)
+
+    # Вычисление значений линии тренда для каждой даты
+    trendline_values = slope * x_values + intercept
+    trendline = dict(zip(dates, trendline_values))
+
+    clean_data.append(trendline)
+
     metricks_data.append(res_clicks)
     metricks_data.append(res_impressions)
     metricks_data.append(res_not_void)
+
 
     json_clean_data = jsonable_encoder(clean_data)
     json_total_records = jsonable_encoder(*total_records)
