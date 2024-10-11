@@ -46,6 +46,10 @@
     {% endif %}
     {% if user.role_info.access_queries_full or user.role_info.access_queries_sum %}
         <input type="button" value="Скрыть график" id="hideGraphBtn" style="display: none;" onclick="toggleGraph();">
+        <div id="Interpolation" style="display: none;">
+            <label for="showTrendline">Interpolation</label>
+            <input type="checkbox" id="showTrendline">
+        </div>
         <canvas id="myChart" width="600" height="100" style="display: none;"></canvas>
     {% endif %}
     {% if user.role_info.access_queries_full or user.role_info.access_queries_view %}
@@ -1864,7 +1868,8 @@
 
             // Вызываем функцию для отрисовки графиков
             toggleOnGraph();
-            renderChart(dates, clicks, impressions, rows);
+            const showTrendline = document.getElementById('showTrendline').checked;
+            renderChart(dates, clicks, impressions, rows, showTrendline);
             
             console.log(data);
             metricks_data = data.metricks_data;
@@ -1918,13 +1923,15 @@
 function toggleGraph() {
     const chartContainer = document.getElementById('myChart');
     const hideGraphBtn = document.getElementById('hideGraphBtn');
-
+    const InterpolationCheckbox = document.getElementById('Interpolation');
     if (chartContainer.style.display === 'none') {
         chartContainer.style.display = 'block';
         hideGraphBtn.value = "Скрыть график";
+        InterpolationCheckbox.style.display = 'block';
     } else {
         chartContainer.style.display = 'none';
         hideGraphBtn.value = "Показать график";
+        InterpolationCheckbox.style.display = 'none';
     }
 }
 
@@ -1932,66 +1939,109 @@ function toggleGraph() {
 function toggleOnGraph() {
     const chartContainer = document.getElementById('myChart');
     const hideGraphBtn = document.getElementById('hideGraphBtn');
+    const InterpolationCheckbox = document.getElementById('Interpolation');
     chartContainer.style.display = 'block';
     hideGraphBtn.value = "Скрыть график";
-    hideGraphBtn.style.display = 'block';   
+    hideGraphBtn.style.display = 'block';
+    InterpolationCheckbox.style.display = 'block';   
 }
 
 // Функция для скрытия графика
 function toggleOffGraph() {
     const chartContainer = document.getElementById('myChart');
     const hideGraphBtn = document.getElementById('hideGraphBtn');
+    const InterpolationCheckbox = document.getElementById('Interpolation');
     chartContainer.style.display = 'none';
     hideGraphBtn.style.display = 'block';
     hideGraphBtn.value = "Показать график";
+    InterpolationCheckbox.style.display = 'none';
 }
 
 // Функция для скрытия графика и кнопки показа графика
 function toggleDeleteGraph() {
     const chartContainer = document.getElementById('myChart');
     const hideGraphBtn = document.getElementById('hideGraphBtn');
+    const InterpolationCheckbox = document.getElementById('Interpolation');
     chartContainer.style.display = 'none';
     hideGraphBtn.style.display = 'none';
+    InterpolationCheckbox.style.display = 'none';
 }
 
 // Функция для отрисовки графиков
-function renderChart(dates, clicks, impressions, rows) {
+function renderChart(dates, clicks, impressions, rows, showTrendline) {
     var ctx = document.getElementById('myChart').getContext('2d');
     // Если график уже существует, уничтожаем его перед созданием нового
     if (chartInstance) {
         chartInstance.destroy();
     }
+    let datasets = []
+    if (showTrendline) {
+        datasets = [
+            {
+                label: 'Impressions',
+                data: Object.values(impressions),
+                borderColor: 'rgb(54, 162, 235)',
+                fill: false,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                cubicInterpolationMode: 'monotone'
+            },
+            {
+                label: 'Top 50 Rows',
+                data: Object.values(rows),
+                borderColor: 'rgb(75, 192, 192)',
+                fill: false,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                cubicInterpolationMode: 'monotone'
+            },
+            {
+                label: 'Clicks',
+                data: Object.values(clicks),
+                borderColor: 'rgb(255, 99, 132)',
+                fill: false,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                cubicInterpolationMode: 'monotone'
+            }
+        ];
+    }
+    else {
+        datasets = [
+            {
+                label: 'Impressions',
+                data: Object.values(impressions),
+                borderColor: 'rgb(54, 162, 235)',
+                fill: false,
+                pointRadius: 4,
+                pointHoverRadius: 8,
+            },
+            {
+                label: 'Top 50 Rows',
+                data: Object.values(rows),
+                borderColor: 'rgb(75, 192, 192)',
+                fill: false,
+                pointRadius: 4,
+                pointHoverRadius: 8,
+            },
+            {
+                label: 'Clicks',
+                data: Object.values(clicks),
+                borderColor: 'rgb(255, 99, 132)',
+                fill: false,
+                //pointStyle: 'rectBounded',
+                pointRadius: 4,
+                pointHoverRadius: 8
+            }
+        ]
+        }
+
+
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: dates,
-            datasets: [
-                {
-                    label: 'Impressions',
-                    data: Object.values(impressions),
-                    borderColor: 'rgb(54, 162, 235)',
-                    fill: false,
-                    pointRadius: 4,
-                    pointHoverRadius: 8
-                },
-                {
-                    label: 'Top 50 Rows',
-                    data: Object.values(rows),
-                    borderColor: 'rgb(75, 192, 192)',
-                    fill: false,
-                    pointRadius: 4,
-                    pointHoverRadius: 8
-                },
-                {
-                    label: 'Clicks',
-                    data: Object.values(clicks),
-                    borderColor: 'rgb(255, 99, 132)',
-                    fill: false,
-                    //pointStyle: 'rectBounded',
-                    pointRadius: 4,
-                    pointHoverRadius: 8
-                }
-            ]
+            datasets: datasets,
         },
         options: {
             responsive: true,
