@@ -3,6 +3,7 @@ from datetime import datetime
 from psycopg2 import IntegrityError
 import requests
 from sqlalchemy import select
+from watchfiles import awatch
 
 from db.models import LastUpdateDate, Query
 from db.models import MetricsQuery
@@ -113,13 +114,12 @@ async def get_data_by_page(page, last_update_date, URL, ACCESS_TOKEN, async_sess
     await add_data(data, last_update_date, async_session)
 
 
-async def get_all_data(request_session):
-    config, group = request_session["config"], request_session["group"]
+async def load_queries(config: dict, group: dict):
     DATABASE_NAME, ACCESS_TOKEN, USER_ID, HOST_ID, group = (config['database_name'],
-                                                                  config['access_token'],
-                                                                  config['user_id'],
-                                                                  config['host_id'],
-                                                                  group['name'])
+                                                            config['access_token'],
+                                                            config['user_id'],
+                                                            config['host_id'],
+                                                            group['name'])
 
     async_session = await connect_db(DATABASE_NAME)
 
@@ -167,11 +167,15 @@ async def get_all_data(request_session):
         except Exception as e:
             print("Error: ", e)
         print(datetime.now() - curr)
-    
+
     return {"status": 200,
             "message": f"load {query_count} records"
             }
 
+
+async def get_all_data(request_session):
+    config, group = request_session["config"], request_session["group"]
+    return await load_queries(config, group)
 
 if __name__ == '__main__':
     cfg = {

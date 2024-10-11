@@ -912,4 +912,3 @@ async def get_list_updates_schedule(
         id=schedule.id, mode=schedule.mode, days=schedule.days.split(",") if schedule.days else None, hours=schedule.hours, minutes=schedule.minutes
     )
 
-

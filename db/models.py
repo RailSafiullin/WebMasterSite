@@ -3,8 +3,8 @@ from sqlalchemy import Float, Enum, ARRAY
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy import Integer
-from sqlalchemy import DateTime, ForeignKey
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import DateTime
+from sqlalchemy.orm import declarative_base
 
 ##############################
 # BLOCK WITH DATABASE MODELS #
@@ -16,9 +16,7 @@ Base = declarative_base()
 class Url(Base):
     __tablename__ = "url"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
     url = Column(String, nullable=False, unique=True, primary_key=True)
-    metrics = relationship("Metrics", back_populates="url_relation")
 
 
 class Metrics(Base):
