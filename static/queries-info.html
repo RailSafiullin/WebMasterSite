@@ -1866,7 +1866,7 @@
             // Вызываем функцию для отрисовки графиков
             toggleOnGraph();
             //const showTrendline = document.getElementById('showTrendline').checked;
-            renderChart(dates, clicks, impressions, rows);//, showTrendline);
+            renderChart(dates, clicks, impressions, rows, Average_clicks);//, showTrendline);
             
             console.log(data);
             metricks_data = data.metricks_data;
@@ -1974,15 +1974,6 @@ function renderChart(dates, clicks, impressions, rows, Average_clicks) {
     
     datasets = [
         {
-            label: 'Clicks trend',
-            data: Object.values(Average_clicks),
-            borderColor: 'rgb(54, 162, 235)',
-            fill: false,
-            pointRadius: 2,
-            pointHoverRadius: 4,
-            cubicInterpolationMode: 'monotone'
-        },
-        {
             label: 'Impressions',
             data: Object.values(impressions),
             borderColor: 'rgb(54, 162, 235)',
@@ -2004,6 +1995,15 @@ function renderChart(dates, clicks, impressions, rows, Average_clicks) {
             label: 'Clicks',
             data: Object.values(clicks),
             borderColor: 'rgb(255, 99, 132)',
+            fill: false,
+            pointRadius: 2,
+            pointHoverRadius: 4,
+            cubicInterpolationMode: 'monotone'
+        },
+        {
+            label: 'Clicks trend',
+            data: Object.values(Average_clicks),
+            borderColor: 'rgb(54, 162, 235)',
             fill: false,
             pointRadius: 2,
             pointHoverRadius: 4,

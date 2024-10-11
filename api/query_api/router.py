@@ -24,6 +24,9 @@ from api.auth.auth_config import current_user, RoleChecker, PermissionRoleChecke
 
 from const import date_format_2, date_format_out
 
+import numpy as np
+from scipy import stats
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 stream_handler = logging.StreamHandler(sys.stdout)
