@@ -8,6 +8,7 @@
     <link href="https://cdn.datatables.net/2.0.6/css/dataTables.dataTables.css">
     <link href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.dataTables.css">
     <link rel="stylesheet" href="/static/css/urls_styles.css"> <!-- Подключение CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="button-container">
@@ -26,7 +27,7 @@
     <!-- Existing filters and buttons -->
     <input type="date" id="start_date">
     <input type="date" id="end_date">
-    {% if user.role_info.access_url_full or  user.role_info.access_url_filter%}
+    {% if user.role_info.access_url_full or user.role_info.access_url_filter%}
         <input type="text" id="search_field" style="width: 250px">
         <label for="input_sort">Отсортировать?</label>
         <input type="checkbox" id="input_sort">
@@ -35,13 +36,17 @@
         <input type="button" value="Отфильтровать" onclick="UpdateTable();">
     {% endif %}
 
-    {% if user.role_info.access_url_full or  user.role_info.access_url_export%}
+    {% if user.role_info.access_url_full or user.role_info.access_url_export%}
         <input type="button" value="Excel" onclick="generateExcel('{{ url_for('generate_excel_url')}}');">
         <input type="button" value="Csv" onclick="generateCsv('{{ url_for('generate_csv_url')}}');">
     {% endif %}
 
-    {% if user.role_info.access_url_full or  user.role_info.access_url_sum%}
+    {% if user.role_info.access_url_full or user.role_info.access_url_sum %}
         <input type="button" value="Вычислить суммы" onclick="getTotalSum('{{ url_for('get_total_sum_urls')}}');">
+    {% endif %}
+    {% if user.role_info.access_url_full or user.role_info.access_url_sum %}
+        <input type="button" value="Скрыть график" id="hideGraphBtn" style="display: none;" onclick="toggleGraph();">
+        <canvas id="myChart" width="600" height="100" style="display: none;"></canvas>
     {% endif %}
 
     <table id="example" class="display nowrap" style="width:100%;">
@@ -81,6 +86,8 @@
     var prev_start_date = null;
     var prev_end_date = null;
     var prev_search_field = "";
+
+    let chartInstance = null; // Глобальная переменная для хранения экземпляра графика
 
     function getDayOfWeek(dateString) {
       const dateParts = dateString.split("-");
@@ -858,6 +865,7 @@
                 
                 elmtTable.removeChild(rows[x]);
             }
+            toggleDeleteGraph()
         }
         prev_start_date = document.getElementById('start_date').value;
         prev_end_date = document.getElementById('end_date').value;
@@ -1855,6 +1863,17 @@
     })
         .then(response => response.json())
         .then(data => {
+
+            // Получаем данные для графиков
+            var clicks = data.clean_data[0];
+            var impressions = data.clean_data[1];
+            var rows = data.clean_data[2];
+            var dates = Object.keys(clicks); // Получаем даты для оси X
+
+            // Вызываем функцию для отрисовки графиков
+            toggleOnGraph();
+            renderChart(dates, clicks, impressions, rows);
+
             console.log(data);
             metricks_data = data.metricks_data;
             var totalRecords = data.total_records; // Получаем общее количество записей
@@ -1903,6 +1922,104 @@
             $('.loader').hide();
         });
     
+}
+
+// Функция для показа или скрытия графика
+function toggleGraph() {
+    const chartContainer = document.getElementById('myChart');
+    const hideGraphBtn = document.getElementById('hideGraphBtn');
+
+    if (chartContainer.style.display === 'none') {
+        chartContainer.style.display = 'block';
+        hideGraphBtn.value = "Скрыть график";
+    } else {
+        chartContainer.style.display = 'none';
+        hideGraphBtn.value = "Показать график";
+    }
+}
+
+// Функция для показа
+function toggleOnGraph() {
+    const chartContainer = document.getElementById('myChart');
+    const hideGraphBtn = document.getElementById('hideGraphBtn');
+    chartContainer.style.display = 'block';
+    hideGraphBtn.value = "Скрыть график";
+    hideGraphBtn.style.display = 'block';   
+}
+
+// Функция для скрытия графика
+function toggleOffGraph() {
+    const chartContainer = document.getElementById('myChart');
+    const hideGraphBtn = document.getElementById('hideGraphBtn');
+    chartContainer.style.display = 'none';
+    hideGraphBtn.style.display = 'block';
+    hideGraphBtn.value = "Показать график";
+}
+
+// Функция для скрытия графика и кнопки показа графика
+function toggleDeleteGraph() {
+    const chartContainer = document.getElementById('myChart');
+    const hideGraphBtn = document.getElementById('hideGraphBtn');
+    chartContainer.style.display = 'none';
+    hideGraphBtn.style.display = 'none';
+}
+
+// Функция для отрисовки графиков
+function renderChart(dates, clicks, impressions, rows) {
+    var ctx = document.getElementById('myChart').getContext('2d');
+    // Если график уже существует, уничтожаем его перед созданием нового
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'Impressions',
+                    data: Object.values(impressions),
+                    borderColor: 'rgb(54, 162, 235)',
+                    fill: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 8
+                },
+                {
+                    label: 'Top 50 Rows',
+                    data: Object.values(rows),
+                    borderColor: 'rgb(75, 192, 192)',
+                    fill: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 8
+                },
+                {
+                    label: 'Clicks',
+                    data: Object.values(clicks),
+                    borderColor: 'rgb(255, 99, 132)',
+                    fill: false,
+                    //pointStyle: 'rectBounded',
+                    pointRadius: 4,
+                    pointHoverRadius: 8
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            stacked: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                }
+            }
+        }
+    });
 }
 function generateCsv(url_f) {
     $('.loader').show();
