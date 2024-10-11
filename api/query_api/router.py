@@ -308,7 +308,7 @@ async def get_total_sum(
     res_impressions = {"query":
                 f"<div style='width:355px; height: 55px; overflow: auto; white-space: nowrap;'><span>Суммарные показы</span></div>"}
     res_not_void = {"query":
-                f"<div style='width:355px; height: 55px; overflow: auto; white-space: nowrap;'><span>Строки с данными</span></div>"}
+                f"<div style='width:355px; height: 55px; overflow: auto; white-space: nowrap;'><span>Строки в топ 50</span></div>"}
     prev_clicks_value = -inf
     prev_impression_value = -inf
 

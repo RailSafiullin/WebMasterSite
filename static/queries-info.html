@@ -1967,15 +1967,6 @@ function renderChart(dates, clicks, impressions, rows) {
             labels: dates,
             datasets: [
                 {
-                    label: 'Clicks',
-                    data: Object.values(clicks),
-                    borderColor: 'rgb(255, 99, 132)',
-                    fill: false,
-                    //pointStyle: 'rectBounded',
-                    pointRadius: 4,
-                    pointHoverRadius: 8
-                },
-                {
                     label: 'Impressions',
                     data: Object.values(impressions),
                     borderColor: 'rgb(54, 162, 235)',
@@ -1984,10 +1975,19 @@ function renderChart(dates, clicks, impressions, rows) {
                     pointHoverRadius: 8
                 },
                 {
-                    label: 'Rows',
+                    label: 'Top 50 Rows',
                     data: Object.values(rows),
                     borderColor: 'rgb(75, 192, 192)',
                     fill: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 8
+                },
+                {
+                    label: 'Clicks',
+                    data: Object.values(clicks),
+                    borderColor: 'rgb(255, 99, 132)',
+                    fill: false,
+                    //pointStyle: 'rectBounded',
                     pointRadius: 4,
                     pointHoverRadius: 8
                 }
