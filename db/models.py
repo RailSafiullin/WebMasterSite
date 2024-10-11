@@ -1,10 +1,12 @@
 from datetime import datetime
 from sqlalchemy import Float, Enum, ARRAY
 from sqlalchemy import Column
+from sqlalchemy import ForeignKey
 from sqlalchemy import String
 from sqlalchemy import Integer
 from sqlalchemy import DateTime
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import relationship
 
 ##############################
 # BLOCK WITH DATABASE MODELS #
