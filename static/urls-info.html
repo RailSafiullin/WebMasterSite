@@ -1981,10 +1981,10 @@ function renderChart(dates, clicks, impressions, rows, Average_clicks) {
         chartInstance.destroy();
     }
     let datasets = []
-    console.log(Average_clicks)
+    
     datasets = [
         {
-            label: 'Average clicks',
+            label: 'Clicks trend',
             data: Object.values(Average_clicks),
             borderColor: 'rgb(54, 162, 235)',
             fill: false,

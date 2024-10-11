@@ -369,6 +369,21 @@ async def get_total_sum(
     clean_data.append(impressions)
     clean_data.append(not_void)
 
+        # Преобразуем даты в числовые индексы
+    dates = list(clicks.keys())
+    values = list(clicks.values())
+    x_values = np.arange(len(values))  # Индексы для дат
+
+    # Линейная регрессия для нахождения линии тренда
+    slope, intercept, _, _, _ = stats.linregress(x_values, values)
+
+    # Вычисление значений линии тренда для каждой даты
+    trendline_values = slope * x_values + intercept
+    trendline = dict(zip(dates, trendline_values))
+
+    clean_data.append(trendline)
+
+
     metricks_data.append(res_clicks)
     metricks_data.append(res_impressions)
     metricks_data.append(res_not_void)

@@ -1860,6 +1860,7 @@
             var clicks = data.clean_data[0];
             var impressions = data.clean_data[1];
             var rows = data.clean_data[2];
+            var Average_clicks = data.clean_data[3];
             var dates = Object.keys(clicks); // Получаем даты для оси X
 
             // Вызываем функцию для отрисовки графиков
@@ -1963,7 +1964,7 @@ function toggleDeleteGraph() {
 }
 
 // Функция для отрисовки графиков
-function renderChart(dates, clicks, impressions, rows) {
+function renderChart(dates, clicks, impressions, rows, Average_clicks) {
     var ctx = document.getElementById('myChart').getContext('2d');
     // Если график уже существует, уничтожаем его перед созданием нового
     if (chartInstance) {
@@ -1972,6 +1973,15 @@ function renderChart(dates, clicks, impressions, rows) {
     let datasets = []
     
     datasets = [
+        {
+            label: 'Clicks trend',
+            data: Object.values(Average_clicks),
+            borderColor: 'rgb(54, 162, 235)',
+            fill: false,
+            pointRadius: 2,
+            pointHoverRadius: 4,
+            cubicInterpolationMode: 'monotone'
+        },
         {
             label: 'Impressions',
             data: Object.values(impressions),
