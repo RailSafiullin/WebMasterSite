@@ -311,7 +311,15 @@ async def get_total_sum(
                 f"<div style='width:355px; height: 55px; overflow: auto; white-space: nowrap;'><span>Строки с данными</span></div>"}
     prev_clicks_value = -inf
     prev_impression_value = -inf
+
+    clean_data = []
+    clicks = dict()
+    impressions = dict()
+    not_void = dict()
+
     for date, clicks_count, impressions_count in sorted(metricks, key=lambda x: x[0]):
+        clicks[date.strftime(date_format_2)] = clicks_count
+        impressions[date.strftime(date_format_2)] = impressions_count
         if clicks_count >= prev_clicks_value:
             color = "#9DE8BD"  # green
         else:
@@ -341,6 +349,7 @@ async def get_total_sum(
         prev_impression_value = impressions_count
 
     for date, not_void_count in sorted(not_void_count_metricks, key=lambda x: x[0]):
+        not_void[date.strftime(date_format_2)] = not_void_count
         total_not_void += not_void_count
         res_not_void[date.strftime(
                 date_format_2)] = f"""<div style='height: 55px; width: 100px; margin: 0px; padding: 0px; background-color: #9DE8BD; text-align: center; display: flex; align-items: center; justify-content: center;'>
@@ -356,17 +365,24 @@ async def get_total_sum(
     res_not_void["result"] = f"""<div style='height: 55px; width: 100px; margin: 0px; padding: 0px; background-color: #9DE8BD; text-align: center; display: flex; align-items: center; justify-content: center;'>
                                     <span style='font-size: 18px'>{total_not_void}</span>
                                     </div>"""
+    clean_data.append(clicks)
+    clean_data.append(impressions)
+    clean_data.append(not_void)
+
     metricks_data.append(res_clicks)
     metricks_data.append(res_impressions)
     metricks_data.append(res_not_void)
 
+    json_clean_data = jsonable_encoder(clean_data)
     json_total_records = jsonable_encoder(*total_records)
     json_metricks_data = jsonable_encoder(metricks_data)
 
     logger.info("get query data success")
     # return JSONResponse({"data": json_data, "recordsTotal": limit, "recordsFiltered": 50000})
-    return JSONResponse({"metricks_data": json_metricks_data, "total_records": json_total_records
-                        })
+    return JSONResponse({"metricks_data": json_metricks_data, 
+                        "total_records": json_total_records,
+                        "clean_data" : json_clean_data
+    })
 @router.delete("/")
 async def delete_query(
     request: Request,
