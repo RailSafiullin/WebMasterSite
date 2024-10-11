@@ -18,8 +18,9 @@ Base = declarative_base()
 class Url(Base):
     __tablename__ = "url"
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
     url = Column(String, nullable=False, unique=True, primary_key=True)
-
+    metrics = relationship("Metrics", back_populates="url_relation")
 
 class Metrics(Base):
     __tablename__ = "metrics"
