@@ -1073,7 +1073,7 @@ class MergeDAL:
     async def get_merge_queries(self, date_start, date_end, queries: List[str]):
         sub = select(Query).where(Query.query.in_(queries)).subquery()
         query = select(MetricsQuery.date, MetricsQuery.position, MetricsQuery.clicks, MetricsQuery.impression,
-                       MetricsQuery.ctr, sub).join(sub,
+                       MetricsQuery.ctr, sub.c.query).join(sub,
                                                    MetricsQuery.query_id == sub.c.id).group_by(
             sub.c.query,
             MetricsQuery.date,
