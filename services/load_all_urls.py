@@ -3,7 +3,7 @@ from datetime import datetime
 from psycopg2 import IntegrityError
 import requests
 from sqlalchemy import select
-
+from urllib.parse import unquote
 from api.actions.actions import add_last_load_date
 from db.models import LastUpdateDate, Url
 from db.models import Metrics
@@ -22,7 +22,7 @@ from const import date_format
 async def add_data(data, last_update_date, async_session, mx_date=None):
     for query in data['text_indicator_to_statistics']:
         query_name = query['text_indicator']['value']
-        
+        query_name = unquote(query_name)
         async with async_session() as session:
             existing_url = await session.execute(
                 select(Url).filter_by(url=query_name)

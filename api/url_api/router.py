@@ -5,7 +5,7 @@ from cmath import inf
 from itertools import groupby
 import logging
 import sys
-from urllib.parse import unquote
+
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -613,7 +613,7 @@ async def get_urls(
     data = []
     for el in grouped_data:
         res = {"url":
-                   f"<div style='width:355px; height: 55px; overflow: auto; white-space: nowrap;'><span>{unquote(el[0])}</span></div>"}
+                   f"<div style='width:355px; height: 55px; overflow: auto; white-space: nowrap;'><span>{el[0]}</span></div>"}
         total_clicks, position, impressions, ctr, count = 0, 0, 0, 0, 0
         for k, stat in enumerate(el[1]):
             up = 0
