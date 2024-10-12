@@ -1860,13 +1860,15 @@
             var clicks = data.clean_data[0];
             var impressions = data.clean_data[1];
             var rows = data.clean_data[2];
-            var Average_clicks = data.clean_data[3];
+            var average_clicks = data.clean_data[3];
+            var average_impressions = data.clean_data[4];
+            var average_rows = data.clean_data[5];
             var dates = Object.keys(clicks); // Получаем даты для оси X
 
             // Вызываем функцию для отрисовки графиков
             toggleOnGraph();
             //const showTrendline = document.getElementById('showTrendline').checked;
-            renderChart(dates, clicks, impressions, rows, Average_clicks);//, showTrendline);
+            renderChart(dates, clicks, impressions, rows, average_clicks, average_impressions, average_rows);//, showTrendline);
             
             console.log(data);
             metricks_data = data.metricks_data;
@@ -1964,7 +1966,7 @@ function toggleDeleteGraph() {
 }
 
 // Функция для отрисовки графиков
-function renderChart(dates, clicks, impressions, rows, Average_clicks) {
+function renderChart(dates, clicks, impressions, rows, average_clicks, average_impressions, average_rows) {
     var ctx = document.getElementById('myChart').getContext('2d');
     // Если график уже существует, уничтожаем его перед созданием нового
     if (chartInstance) {
@@ -2001,13 +2003,31 @@ function renderChart(dates, clicks, impressions, rows, Average_clicks) {
             cubicInterpolationMode: 'monotone'
         },
         {
-            label: 'Clicks trend',
-            data: Object.values(Average_clicks),
+            label: 'Impressions trend',
+            data: Object.values(average_impressions),
             borderColor: 'rgb(54, 162, 235)',
             fill: false,
-            pointRadius: 2,
-            pointHoverRadius: 4,
-            cubicInterpolationMode: 'monotone'
+            pointStyle: false,
+            cubicInterpolationMode: 'monotone',
+            borderWidth: 2
+        },
+        {
+            label: 'Top 50 rows trend',
+            data: Object.values(average_rows),
+            borderColor: 'rgb(54, 162, 235)',
+            fill: false,
+            pointStyle: false,
+            cubicInterpolationMode: 'monotone',
+            borderWidth: 2
+        },
+        {
+            label: 'Clicks trend',
+            data: Object.values(average_clicks),
+            borderColor: 'rgb(54, 162, 235)',
+            fill: false,
+            pointStyle: false,
+            cubicInterpolationMode: 'monotone',
+            borderWidth: 2
         }
     ];
     chartInstance = new Chart(ctx, {

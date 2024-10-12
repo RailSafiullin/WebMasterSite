@@ -784,17 +784,19 @@ async def get_total_sum_urls(
 
         # Преобразуем даты в числовые индексы
     dates = list(clicks.keys())
-    values = list(clicks.values())
-    x_values = np.arange(len(values))  # Индексы для дат
+    for object in clicks, impressions, not_void:
 
-    # Линейная регрессия для нахождения линии тренда
-    slope, intercept, _, _, _ = stats.linregress(x_values, values)
+        values = list(object.values())
+        x_values = np.arange(len(values))  # Индексы для дат
 
-    # Вычисление значений линии тренда для каждой даты
-    trendline_values = slope * x_values + intercept
-    trendline = dict(zip(dates, trendline_values))
+        # Линейная регрессия для нахождения линии тренда
+        slope, intercept, _, _, _ = stats.linregress(x_values, values)
 
-    clean_data.append(trendline)
+        # Вычисление значений линии тренда для каждой даты
+        trendline_values = slope * x_values + intercept
+        trendline = dict(zip(dates, trendline_values))
+
+        clean_data.append(trendline)
 
     metricks_data.append(res_clicks)
     metricks_data.append(res_impressions)
