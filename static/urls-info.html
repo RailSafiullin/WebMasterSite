@@ -1985,7 +1985,7 @@ function renderChart(dates, clicks, impressions, rows, average_clicks, average_i
     let datasets = []
     
     datasets = [
-        {
+    {
             label: 'Impressions',
             data: Object.values(impressions),
             borderColor: 'rgb(54, 162, 235)',
@@ -2019,25 +2019,28 @@ function renderChart(dates, clicks, impressions, rows, average_clicks, average_i
             fill: false,
             pointStyle: false,
             cubicInterpolationMode: 'monotone',
-            borderWidth: 2
+            borderWidth: 1,
+            hidden: true
         },
         {
             label: 'Top 50 rows trend',
             data: Object.values(average_rows),
-            borderColor: 'rgb(54, 162, 235)',
+            borderColor: 'rgb(75, 192, 192)',
             fill: false,
             pointStyle: false,
             cubicInterpolationMode: 'monotone',
-            borderWidth: 2
+            borderWidth: 1,
+            hidden: true
         },
         {
             label: 'Clicks trend',
             data: Object.values(average_clicks),
-            borderColor: 'rgb(54, 162, 235)',
+            borderColor: 'rgb(255, 99, 132)',
             fill: false,
             pointStyle: false,
             cubicInterpolationMode: 'monotone',
-            borderWidth: 2
+            borderWidth: 1, 
+            hidden: true
         }
     ];
     chartInstance = new Chart(ctx, {
