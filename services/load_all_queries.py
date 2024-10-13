@@ -54,7 +54,7 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
         element_count = len(query['statistics'])
 
         for count, el in enumerate(query['statistics']):
-            if date != el['date'] or count == element_count - 1:
+            if date != el['date'] or count == element_count:
                 date = datetime.strptime(date, date_format)
                 if mx_date:
                     mx_date[0] = max(mx_date[0], date)
@@ -78,18 +78,19 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                     "clicks": 0,
                 }
 
+            # Словарь для сопоставления поля с ключом в data_add
+            field_mapping = {
+                "IMPRESSIONS": "impression",
+                "CLICKS": "clicks",
+                "DEMAND": "demand",
+                "CTR": "ctr",
+                "POSITION": "position"
+            }
+
             # Обновление полей метрик
             field = el["field"]
-            if field == "IMPRESSIONS":
-                data_add["impression"] = el["value"]
-            elif field == "CLICKS":
-                data_add["clicks"] = el["value"]
-            elif field == "DEMAND":
-                data_add["demand"] = el["value"]
-            elif field == "CTR":
-                data_add["ctr"] = el["value"]
-            elif field == "POSITION":
-                data_add["position"] = el["value"]
+            if field in field_mapping:
+                data_add[field_mapping[field]] = el["value"]
 
     # Создание списка задач для параллельной обработки каждого запроса
     tasks = [process_query(query) for query in data['text_indicator_to_statistics']]
