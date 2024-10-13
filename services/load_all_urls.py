@@ -18,11 +18,13 @@ from fastapi import HTTPException
 
 from const import date_format
 
-
 async def add_data(data, last_update_date, async_session, mx_date=None):
-    for query in data['text_indicator_to_statistics']:
-        query_name = query['text_indicator']['value']
-        query_name = unquote(query_name)
+    metrics = []  # Для пакетной вставки всех метрик
+    
+    async def process_query(query):
+        query_name = unquote(query['text_indicator']['value'])
+        
+        # Асинхронная проверка существующего URL или добавление нового
         async with async_session() as session:
             existing_url = await session.execute(
                 select(Url).filter_by(url=query_name)
@@ -31,14 +33,14 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
             
             if not existing_url:
                 # Если Url не существует, создаём новую запись
-                new_query = Url(url=query_name)
-                session.add(new_query)
+                new_url = Url(url=query_name)
+                session.add(new_url)
                 await session.commit()
-                url_id = new_query.id
+                url_id = new_url.id
             else:
                 url_id = existing_url.id
-        
-        metrics = []
+
+        # Обработка метрик для каждой статистики
         date = query['statistics'][0]["date"]
         data_add = {
             "date": date,
@@ -50,7 +52,7 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
         }
 
         element_count = len(query['statistics'])
-        
+
         for count, el in enumerate(query['statistics']):
             if date != el['date'] or count == element_count - 1:
                 date = datetime.strptime(date, date_format)
@@ -76,6 +78,7 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                     "clicks": 0,
                 }
 
+            # Обновление полей метрик
             field = el["field"]
             if field == "IMPRESSIONS":
                 data_add["impression"] = el["value"]
@@ -88,8 +91,15 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
             elif field == "POSITION":
                 data_add["position"] = el["value"]
 
-        await _add_new_metrics(metrics, async_session)
+    # Создание списка задач для параллельной обработки каждого запроса
+    tasks = [process_query(query) for query in data['text_indicator_to_statistics']]
 
+    # Параллельное выполнение всех задач
+    await asyncio.gather(*tasks)
+
+    # Пакетная вставка всех метрик в базу данных
+    if metrics:
+        await _add_new_metrics(metrics, async_session)
 
 
 async def get_data_by_page(page, last_update_date, URL, ACCESS_TOKEN, async_session):

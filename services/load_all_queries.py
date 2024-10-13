@@ -20,11 +20,12 @@ from const import date_format
 
 
 async def add_data(data, last_update_date, async_session, mx_date=None):
+    metrics = []  # Для пакетной вставки всех метрик
     
-    for query in data['text_indicator_to_statistics']:
+    async def process_query(query):
         query_name = query['text_indicator']['value']
         
-        # Попытка найти существующую запись Query или создать новую
+        # Асинхронная проверка существующей записи или создание новой
         async with async_session() as session:
             existing_query = await session.execute(
                 select(Query).filter_by(query=query_name)
@@ -32,15 +33,14 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
             existing_query = existing_query.scalar_one_or_none()
             
             if not existing_query:
-                # Если Query не существует, создаём новую запись
                 new_query = Query(query=query_name)
                 session.add(new_query)
-                await session.commit()
+                await session.commit()  # Сохранение новой записи
                 query_id = new_query.id
             else:
                 query_id = existing_query.id
 
-        metrics = []
+        # Обработка метрик для каждой статистики в запросе
         date = query['statistics'][0]["date"]
         data_add = {
             "date": date,
@@ -60,7 +60,7 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                     mx_date[0] = max(mx_date[0], date)
                 if date > last_update_date:
                     metrics.append(MetricsQuery(
-                        query_id=query_id,  # Используем query_id вместо query
+                        query_id=query_id,
                         date=date,
                         ctr=data_add['ctr'],
                         position=data_add['position'],
@@ -78,6 +78,7 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                     "clicks": 0,
                 }
 
+            # Обновление полей метрик
             field = el["field"]
             if field == "IMPRESSIONS":
                 data_add["impression"] = el["value"]
@@ -90,8 +91,16 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
             elif field == "POSITION":
                 data_add["position"] = el["value"]
 
-        # Сохраняем метрики и Query
+    # Создание списка задач для параллельной обработки каждого запроса
+    tasks = [process_query(query) for query in data['text_indicator_to_statistics']]
+    
+    # Параллельное выполнение задач
+    await asyncio.gather(*tasks)
+
+    # Пакетная вставка всех метрик в базу данных
+    if metrics:
         await _add_new_metrics(metrics, async_session)
+
 
 
 
