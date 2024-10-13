@@ -20,25 +20,37 @@ from const import date_format
 
 async def add_data(data, last_update_date, async_session, mx_date=None):
     metrics = []  # Для пакетной вставки всех метрик
-    
+    # Собираем все URL из данных
+    query_names = [unquote(query['text_indicator']['value']) for query in data['text_indicator_to_statistics']]
+
+    # Извлекаем существующие URL за один запрос
+    async with async_session() as session:
+        existing_urls = await session.execute(
+            select(Url).filter(Url.url.in_(query_names))
+        )
+        existing_urls = existing_urls.scalars().all()
+
+    # Создаём словарь существующих URL {query_name: url_id}
+    existing_url_ids = {url.url: url.id for url in existing_urls}
+
+    # Собираем URL, которых нет в базе
+    new_urls = []
+    for query_name in query_names:
+        if query_name not in existing_url_ids:
+            new_urls.append(Url(url=query_name))
+
+    # Вставляем новые URL в базу за один раз и обновляем словарь
+    if new_urls:
+        async with async_session() as session:
+            session.add_all(new_urls)
+            await session.commit()
+
+    # Обновляем словарь с ID новыми URL
+    for new_url in new_urls:
+        existing_url_ids[new_url.url] = new_url.id
+        
     async def process_query(query):
         query_name = unquote(query['text_indicator']['value'])
-        
-        # Асинхронная проверка существующего URL или добавление нового
-        async with async_session() as session:
-            existing_url = await session.execute(
-                select(Url).filter_by(url=query_name)
-            )
-            existing_url = existing_url.scalar_one_or_none()
-            
-            if not existing_url:
-                # Если Url не существует, создаём новую запись
-                new_url = Url(url=query_name)
-                session.add(new_url)
-                await session.commit()
-                url_id = new_url.id
-            else:
-                url_id = existing_url.id
 
         # Обработка метрик для каждой статистики
         date = query['statistics'][0]["date"]
@@ -54,13 +66,28 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
         element_count = len(query['statistics'])
 
         for count, el in enumerate(query['statistics']):
-            if date != el['date'] or count == element_count:
+
+            # Словарь для сопоставления поля с ключом в data_add
+            field_mapping = {
+                "IMPRESSIONS": "impression",
+                "CLICKS": "clicks",
+                "DEMAND": "demand",
+                "CTR": "ctr",
+                "POSITION": "position"
+            }
+
+            # Обновление полей метрик
+            field = el["field"]
+            if field in field_mapping:
+                data_add[field_mapping[field]] = el["value"]
+
+            if date != el['date'] or count == element_count-1:
                 date = datetime.strptime(date, date_format)
                 if mx_date:
                     mx_date[0] = max(mx_date[0], date)
                 if date > last_update_date:
                     metrics.append(Metrics(
-                        url_id=url_id,  # Используем url_id вместо url
+                        url_id=existing_url_ids[query_name],  # Используем url_id вместо url
                         date=date,
                         ctr=data_add['ctr'],
                         position=data_add['position'],
@@ -78,19 +105,6 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                     "clicks": 0,
                 }
 
-            # Словарь для сопоставления поля с ключом в data_add
-            field_mapping = {
-                "IMPRESSIONS": "impression",
-                "CLICKS": "clicks",
-                "DEMAND": "demand",
-                "CTR": "ctr",
-                "POSITION": "position"
-            }
-
-            # Обновление полей метрик
-            field = el["field"]
-            if field in field_mapping:
-                data_add[field_mapping[field]] = el["value"]
 
     # Создание списка задач для параллельной обработки каждого запроса
     tasks = [process_query(query) for query in data['text_indicator_to_statistics']]
@@ -194,3 +208,4 @@ if __name__ == '__main__':
         "user": "admin"
     }
     asyncio.run(get_all_data(cfg))
+
