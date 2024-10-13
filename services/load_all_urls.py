@@ -165,7 +165,7 @@ async def load_urls(config, group):
         return {"status": 400,
                 "detail": "Data is not up-to-date. Please refresh data before executing the script."
                 }
-    for offset in range(500, 1000, 500):
+    for offset in range(500, count, 500):
         print(f"[INFO] PAGE{offset} DONE!")
         curr = datetime.now()
         try:
