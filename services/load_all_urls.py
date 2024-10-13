@@ -76,12 +76,7 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                 "POSITION": "position"
             }
 
-            # Обновление полей метрик
-            field = el["field"]
-            if field in field_mapping:
-                data_add[field_mapping[field]] = el["value"]
-
-            if date != el['date'] or count == element_count-1:
+            if date != el['date']:
                 date = datetime.strptime(date, date_format)
                 if mx_date:
                     mx_date[0] = max(mx_date[0], date)
@@ -104,12 +99,35 @@ async def add_data(data, last_update_date, async_session, mx_date=None):
                     "demand": 0,
                     "clicks": 0,
                 }
+            if count == element_count-1:
+                # Обновление полей метрик
+                field = el["field"]
+                if field in field_mapping:
+                    data_add[field_mapping[field]] = el["value"]
+                date = datetime.strptime(date, date_format)
+                if mx_date:
+                    mx_date[0] = max(mx_date[0], date)
+                if date > last_update_date:
+                    metrics.append(Metrics(
+                        url_id=existing_url_ids[query_name],  # Используем url_id вместо url
+                        date=date,
+                        ctr=data_add['ctr'],
+                        position=data_add['position'],
+                        impression=data_add['impression'],
+                        demand=data_add['demand'],
+                        clicks=data_add['clicks']
+                    ))
+                date = el['date']
+
+            field = el["field"]
+            if field in field_mapping:
+                data_add[field_mapping[field]] = el["value"]
 
 
     # Создание списка задач для параллельной обработки каждого запроса
     tasks = [process_query(query) for query in data['text_indicator_to_statistics']]
-
-    # Параллельное выполнение всех задач
+    
+    # Параллельное выполнение задач
     await asyncio.gather(*tasks)
 
     # Пакетная вставка всех метрик в базу данных
