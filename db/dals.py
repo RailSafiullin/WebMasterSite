@@ -552,18 +552,24 @@ class UrlDAL:
 
         sub = sub_query.filter(Url.url.like(f"%{search_text.strip()}%")).subquery()
 
-        sub_count_query = select(Metrics.date.label("date"), func.count().label("count_line")                
-                ).join(sub, Metrics.url_id == sub.c.id
-                ).where(Metrics.position > 0
-                ).group_by(Metrics.date
-                ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start)
-                )
-        res = await self.db_session.execute(sub_count_query)
+        # Запрос для всех топов с использованием CASE для подсчета
+        top_count_query = select(
+            Metrics.date.label("date"),
+            func.count().label("total_count"),
+            func.sum(case((Metrics.position <= 3, 1), else_=0)).label("top_3_count"),
+            func.sum(case((Metrics.position <= 5, 1), else_=0)).label("top_5_count"),
+            func.sum(case((Metrics.position <= 10, 1), else_=0)).label("top_10_count")
+        ).join(sub, Metrics.url_id == sub.c.id
+        ).where(Metrics.position > 0
+        ).group_by(Metrics.date
+        ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start))
 
-        product_row = res.fetchall()
-        
-        if len(product_row) != 0:
-            return product_row
+        res = await self.db_session.execute(top_count_query)
+
+        results = res.fetchall()
+
+        if results:
+            return results
         
     async def get_not_void_count_daily_summary(self, date_start, date_end, list_name, general_db):
 
@@ -586,18 +592,24 @@ class UrlDAL:
 
         sub = sub_query.subquery()    
 
-        sub_count_query = select(Metrics.date.label("date"), func.count().label("count_line")                
-                ).join(sub, Metrics.url_id == sub.c.id
-                ).where(Metrics.position > 0
-                ).group_by(Metrics.date
-                ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start)
-                )
-        res = await self.db_session.execute(sub_count_query)
+        # Запрос для всех топов с использованием CASE для подсчета
+        top_count_query = select(
+            Metrics.date.label("date"),
+            func.count().label("total_count"),
+            func.sum(case((Metrics.position <= 3, 1), else_=0)).label("top_3_count"),
+            func.sum(case((Metrics.position <= 5, 1), else_=0)).label("top_5_count"),
+            func.sum(case((Metrics.position <= 10, 1), else_=0)).label("top_10_count")
+        ).join(sub, Metrics.url_id == sub.c.id
+        ).where(Metrics.position > 0
+        ).group_by(Metrics.date
+        ).having(and_(Metrics.date <= date_end, Metrics.date >= date_start))
 
-        product_row = res.fetchall()
-        
-        if len(product_row) != 0:
-            return product_row
+        res = await self.db_session.execute(top_count_query)
+
+        results = res.fetchall()
+
+        if results:
+            return results
 
 class MetricDAL:
     """Data Access Layer for operating user info"""
@@ -932,29 +944,44 @@ class QueryDAL:
         
     async def get_not_void_count_daily_summary_like(self, date_start, date_end, search_text):
         sub = select(Query.id, Query.query).filter(Query.query.like(f"%{search_text.strip()}%")).subquery()
-        sub_count_query = select(MetricsQuery.date.label("date"), func.count().label("count_line")                
-                ).join(sub, MetricsQuery.query_id == sub.c.id
-                ).where(MetricsQuery.position > 0
-                ).group_by(MetricsQuery.date
-                ).having(and_(MetricsQuery.date <= date_end, MetricsQuery.date >= date_start)
-                )
-        res = await self.db_session.execute(sub_count_query)
-        product_row = res.fetchall()
+        # Запрос для всех топов с использованием CASE для подсчета
+        top_count_query = select(
+            MetricsQuery.date.label("date"),
+            func.count().label("total_count"),
+            func.sum(case((MetricsQuery.position <= 3, 1), else_=0)).label("top_3_count"),
+            func.sum(case((MetricsQuery.position <= 5, 1), else_=0)).label("top_5_count"),
+            func.sum(case((MetricsQuery.position <= 10, 1), else_=0)).label("top_10_count")
+        ).join(sub, MetricsQuery.query_id == sub.c.id
+        ).where(MetricsQuery.position > 0
+        ).group_by(MetricsQuery.date
+        ).having(and_(MetricsQuery.date <= date_end, MetricsQuery.date >= date_start))
+
+        res = await self.db_session.execute(top_count_query)
+
+        results = res.fetchall()
+
+        if results:
+            return results
         
-        if len(product_row) != 0:
-            return product_row
         
     async def get_not_void_count_daily_summary(self, date_start, date_end):   
-        sub_count_query = select(MetricsQuery.date.label("date"), func.count().label("count_line")                
-                ).where(MetricsQuery.position > 0
-                ).group_by(MetricsQuery.date
-                ).having(and_(MetricsQuery.date <= date_end, MetricsQuery.date >= date_start)
-                )
-        res = await self.db_session.execute(sub_count_query)
-        product_row = res.fetchall()
-        
-        if len(product_row) != 0:
-            return product_row
+        # Запрос для всех топов с использованием CASE для подсчета
+        top_count_query = select(
+            MetricsQuery.date.label("date"),
+            func.count().label("total_count"),
+            func.sum(case((MetricsQuery.position <= 3, 1), else_=0)).label("top_3_count"),
+            func.sum(case((MetricsQuery.position <= 5, 1), else_=0)).label("top_5_count"),
+            func.sum(case((MetricsQuery.position <= 10, 1), else_=0)).label("top_10_count")
+        ).where(MetricsQuery.position > 0
+        ).group_by(MetricsQuery.date
+        ).having(and_(MetricsQuery.date <= date_end, MetricsQuery.date >= date_start))
+
+        res = await self.db_session.execute(top_count_query)
+
+        results = res.fetchall()
+
+        if results:
+            return results
 
 class MetricQueryDAL:
     """Data Access Layer for operating user info"""
