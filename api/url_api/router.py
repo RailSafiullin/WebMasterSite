@@ -614,6 +614,7 @@ async def get_urls(
         return JSONResponse({"data": []})
     data = []
     for el in grouped_data:
+        #print(el[0])
         res = {"url":
                    f"<div style='width:355px; height: 55px; overflow: auto; white-space: nowrap;'><span>{el[0]}</span></div>"}
         total_clicks, position, impressions, ctr, count = 0, 0, 0, 0, 0
