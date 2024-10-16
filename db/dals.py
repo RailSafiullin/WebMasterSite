@@ -475,11 +475,18 @@ class UrlDAL:
         
         product_row = res.fetchall()
         
-        query = select(func.count()).filter(Url.url.like(f"%{search_text.strip()}%")).limit(1)
-        total_records = await self.db_session.execute(query)
-        #return {"total_records": total_records, "data": product_row}
-        if len(product_row) != 0:   
-            return product_row, total_records.first()
+        # Запрос для подсчета количества уникальных URL с метриками в заданный период
+        count_query = select(func.count(func.distinct(Metrics.url_id))).join(
+            sub, Metrics.url_id == sub.c.id
+        ).filter(
+            and_(Metrics.date <= date_end, Metrics.date >= date_start)
+        )
+
+        total_records = await self.db_session.execute(count_query)
+        total_records_count = total_records.scalar()
+
+        if len(product_row) != 0:
+            return product_row, total_records_count
 
     async def get_metrics_daily_summary(self, date_start, date_end, list_name, general_db):
 
@@ -513,10 +520,16 @@ class UrlDAL:
         res = await self.db_session.execute(query)
         product_row = res.fetchall()
 
-        query = select(func.count()).select_from(sub).limit(1)
-        total_records = await self.db_session.execute(query)
-        if len(product_row) != 0:   
-            return product_row, total_records.first()
+        # Запрос для подсчета количества уникальных URL с метриками в заданный период
+        count_query = select(func.count(func.distinct(Metrics.url_id))).filter(
+            and_(Metrics.date <= date_end, Metrics.date >= date_start)
+        )
+
+        total_records = await self.db_session.execute(count_query)
+        total_records_count = total_records.scalar()
+
+        if len(product_row) != 0:
+            return product_row, total_records_count
         
     async def get_not_void_count_daily_summary_like(self, date_start, date_end, search_text, list_name, general_db):
 
@@ -884,11 +897,18 @@ class QueryDAL:
         res = await self.db_session.execute(query)
         product_row = res.fetchall()
         
-        query = select(func.count()).filter(Query.query.like(f"%{search_text.strip()}%")).limit(1)
-        total_records = await self.db_session.execute(query)
-        #return {"total_records": total_records, "data": product_row}
-        if len(product_row) != 0:   
-            return product_row, total_records.first()
+        # Запрос для подсчета количества уникальных Query с метриками в заданный временной интервал
+        count_query = select(func.count(func.distinct(MetricsQuery.query_id))).join(
+            sub, MetricsQuery.query_id == sub.c.id
+        ).filter(
+            and_(MetricsQuery.date <= date_end, MetricsQuery.date >= date_start)
+        )
+
+        total_records = await self.db_session.execute(count_query)
+        total_records_count = total_records.scalar()
+
+        if len(product_row) != 0:
+            return product_row, total_records_count
 
     async def get_metrics_daily_summary(self, date_start, date_end):
         query = select(MetricsQuery.date, 
@@ -899,12 +919,16 @@ class QueryDAL:
         res = await self.db_session.execute(query)
         product_row = res.fetchall()
         
-        query = select(func.count()).select_from(Query).limit(1)
-        total_records = await self.db_session.execute(query)
-        #for i in total_records:
-        #return {"total_records": total_records, "data": product_row}
-        if len(product_row) != 0:   
-            return product_row, total_records.first()
+        # Запрос для подсчета количества уникальных Query с метриками в заданный временной интервал
+        count_query = select(func.count(func.distinct(MetricsQuery.query_id))).filter(
+            and_(MetricsQuery.date <= date_end, MetricsQuery.date >= date_start)
+        )
+
+        total_records = await self.db_session.execute(count_query)
+        total_records_count = total_records.scalar()
+
+        if len(product_row) != 0:
+            return product_row, total_records_count
         
     async def get_not_void_count_daily_summary_like(self, date_start, date_end, search_text):
         sub = select(Query.id, Query.query).filter(Query.query.like(f"%{search_text.strip()}%")).subquery()
