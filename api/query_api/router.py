@@ -394,7 +394,7 @@ async def get_total_sum(
     metricks_data.append(res_not_void)
 
     json_clean_data = jsonable_encoder(clean_data)
-    json_total_records = jsonable_encoder(*total_records)
+    json_total_records = jsonable_encoder(total_records)
     json_metricks_data = jsonable_encoder(metricks_data)
 
     logger.info("get query data success")
