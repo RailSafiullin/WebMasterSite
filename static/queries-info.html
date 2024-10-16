@@ -2024,7 +2024,8 @@ function renderChart(dates, clicks, impressions, not_void,
 
     // Объединение всех данных
     const allDatasets = datasets.concat(trendDatasets);
-
+    
+    let allHidden = false;
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -2045,7 +2046,78 @@ function renderChart(dates, clicks, impressions, not_void,
                     display: true,
                     position: 'left',
                 }
-            }
+            },
+            plugins: {
+                    legend: {
+                        display: true,
+                        // Настройка функции, которая перехватывает клики по легенде
+                        onClick: (e, legendItem, legend) => {
+                            const datasetIndex = legendItem.datasetIndex;
+                            const chart = legend.chart;
+                            const dataset = chart.data.datasets[datasetIndex];
+
+                            // Переключаем видимость датасета
+                            dataset.hidden = !dataset.hidden;
+                            chart.update();
+                        },
+                        labels: {
+                            generateLabels: (chart) => {
+                                const datasets = chart.data.datasets;
+                                const pairedLegendItems = [];
+
+                                // Создаем метки парами для основной метрики и тренда
+                                for (let i = 0; i < datasets.length / 2; i++) {
+                                    pairedLegendItems.push({
+                                        text: datasets[i].label,
+                                        fillStyle: datasets[i].borderColor,
+                                        strokeStyle: 'BLACK',
+                                        lineCap: 'round',
+                                        hidden: datasets[i].hidden,
+                                        datasetIndex: i,
+                                    });
+                                    pairedLegendItems.push({
+                                        text: datasets[i + datasets.length / 2].label,
+                                        fillStyle: datasets[i + datasets.length / 2].borderColor,
+                                        strokeStyle: datasets[i + datasets.length / 2].borderColor,
+                                        lineCap: 'round',
+                                        hidden: datasets[i + datasets.length / 2].hidden,
+                                        datasetIndex: i + datasets.length / 2,
+                                    });
+                                }
+
+                                // Добавляем кастомную кнопку в легенду с черной рамкой
+                                pairedLegendItems.push({
+                                    text: allHidden ? 'Show All' : 'Hide All',
+                                    fillStyle: 'rgba(0, 0, 0, 0)', // Прозрачный фон
+                                    strokeStyle: 'black', // Черная рамка
+                                    hidden: false,
+                                    datasetIndex: null, // Это не датасет
+                                    isCustom: true, // Пользовательская кнопка
+                                });
+
+                                return pairedLegendItems;
+                            },
+                        },
+                        onClick: (e, legendItem, legend) => {
+                            const chart = legend.chart;
+
+                            // Если это не кастомная кнопка, стандартное поведение
+                            if (!legendItem.isCustom) {
+                                const datasetIndex = legendItem.datasetIndex;
+                                const dataset = chart.data.datasets[datasetIndex];
+                                dataset.hidden = !dataset.hidden;
+                                chart.update();
+                            } else {
+                                // Логика для кастомной кнопки (Hide All / Show All)
+                                allHidden = !allHidden;
+                                chart.data.datasets.forEach((dataset) => {
+                                    dataset.hidden = allHidden;
+                                });
+                                chart.update();
+                            }
+                        }
+                    }
+                }
         }
     });
 }
