@@ -772,7 +772,7 @@ class QueryDAL:
 
         elif state == "decrease":
             if state_type == "date":
-                sub = select(Query.id, Query.query).join(MetricsQuery, MetricsQuery.query_id == Query.id).filter(Query.query.like(f"%{search_text.strip()}%")).where(MetricsQuery.date == state_date).group_by(Query.query, Query.id).order_by(desc(pointer)).offset(page).limit(per_page).subquery()
+                sub = select(Query.id, Query.query).join(MetricsQuery, MetricsQuery.query_id == Query.id).filter(Query.query.like(f"%{search_text.strip()}%")).where(MetricsQuery.date == state_date).group_by(Query.query, Query.id, pointer).order_by(desc(pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(MetricsQuery.date, MetricsQuery.position, MetricsQuery.clicks, MetricsQuery.impression,
                             MetricsQuery.ctr, sub.c.query).join(sub,
@@ -786,7 +786,7 @@ class QueryDAL:
                 ).having(and_(MetricsQuery.date <= date_end, MetricsQuery.date >= date_start))
             else:
                 sub = select(Query.id, Query.query).join(MetricsQuery, MetricsQuery.query_id == Query.id).filter(Query.query.like(f"%{search_text.strip()}%")).where(
-                    and_(MetricsQuery.date >= date_start, MetricsQuery.date <= date_end)).group_by(Query.query, Query.id).order_by(
+                    and_(MetricsQuery.date >= date_start, MetricsQuery.date <= date_end)).group_by(Query.query, Query.id, pointer).order_by(
                     desc(result_pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(MetricsQuery.date, MetricsQuery.position, MetricsQuery.clicks, MetricsQuery.impression,
@@ -807,7 +807,7 @@ class QueryDAL:
                         else_=pointer  # иначе используем значение pointer
                     )
             if state_type == "date":
-                sub = select(Query.id, Query.query).join(MetricsQuery, MetricsQuery.query_id == Query.id).filter(Query.query.like(f"%{search_text.strip()}%")).where(MetricsQuery.date == state_date).group_by(Query.query, Query.id).order_by(asc(pointer)).offset(page).limit(per_page).subquery()
+                sub = select(Query.id, Query.query).join(MetricsQuery, MetricsQuery.query_id == Query.id).filter(Query.query.like(f"%{search_text.strip()}%")).where(MetricsQuery.date == state_date).group_by(Query.query, Query.id, pointer).order_by(asc(pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(MetricsQuery.date, MetricsQuery.position, MetricsQuery.clicks, MetricsQuery.impression,
                             MetricsQuery.ctr, sub.c.query).join(sub,
@@ -821,7 +821,7 @@ class QueryDAL:
                 ).having(and_(MetricsQuery.date <= date_end, MetricsQuery.date >= date_start))
             else:
                 sub = select(Query.id, Query.query).join(MetricsQuery, MetricsQuery.query_id == Query.id).filter(Query.query.like(f"%{search_text.strip()}%")).where(
-                    and_(MetricsQuery.date >= date_start, MetricsQuery.date <= date_end)).group_by(Query.query, Query.id).order_by(
+                    and_(MetricsQuery.date >= date_start, MetricsQuery.date <= date_end)).group_by(Query.query, Query.id, pointer).order_by(
                     asc(result_pointer)).offset(page).limit(per_page).subquery()
 
                 query = select(MetricsQuery.date, MetricsQuery.position, MetricsQuery.clicks, MetricsQuery.impression,
