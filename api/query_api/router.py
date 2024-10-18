@@ -152,7 +152,7 @@ async def get_queries(
                     grouped_data.sort(
                         key=lambda x: next(
                             (
-                                sub_item[1] if sub_item[1] != 0 else 
+                                sub_item[2] if sub_item[1] != 0 else 
                                 (-float('inf') if data_request["button_state"] == "decrease" else float('inf'))
                                 for sub_item in x[1]
                                 if sub_item[0] == state_date
